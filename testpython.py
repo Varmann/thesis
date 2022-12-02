@@ -6,7 +6,7 @@ print('x is: ', x)
 
 #%%
 
-x = 4
+x = 6
 print('x is: ', x)
 # %%
 
