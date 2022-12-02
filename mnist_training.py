@@ -2,7 +2,9 @@
 # get data
 
 import numpy as np
+import gzip
 from tqdm import trange
+import matplotlib as plt
 
 def fetch(url):
   import requests, gzip, os, hashlib, numpy
@@ -19,6 +21,12 @@ X_train = fetch("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz")[0
 Y_train = fetch("http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz")[8:]
 X_test = fetch("http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz")[0x10:].reshape((-1, 28, 28))
 Y_test = fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz")[8:]
+
+# beispiel, das für alle machen
+with open('path_and_name_of_file_1.gz', "rb") as f:
+  dat = f.read()
+X_train = np.frombuffer(gzip.decompress(dat), dtype=np.uint8).copy()
+
 
 # model
 import torch
@@ -49,7 +57,9 @@ with torch.no_grad():
 """
 
 loss_function = nn.NLLLoss(reduction='none')
+# lr : learning rate
 optim = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0)
+# bs : batch size
 BS = 128
 losses, accuracies = [], []
 for i in (t := trange(1000)):
@@ -57,9 +67,12 @@ for i in (t := trange(1000)):
   X = torch.tensor(X_train[samp].reshape((-1, 28*28))).float()
   Y = torch.tensor(Y_train[samp]).long()
   model.zero_grad()
+  # model ist wie f(x), also das trainierte Netz
+  # out ist wie Y_prediction, also die prediction für Y
   out = model(X)
   cat = torch.argmax(out, dim=1)
   accuracy = (cat == Y).float().mean()
+  # loss ist Ergebnis der loss function, so ähnlich wie der "Fehler" zwischen Vorhersage Y_prediction und richtigem Y
   loss = loss_function(out, Y)
   loss = loss.mean()
   loss.backward()
@@ -69,10 +82,9 @@ for i in (t := trange(1000)):
   accuracies.append(accuracy)
   t.set_description("loss %.2f accuracy %.2f" % (loss, accuracy))
 plt.ylim(-0.1, 1.1)
-plot(losses)
-plot(accuracies)
+plt.plot(losses)
+plt.plot(accuracies)
 
-#%%
 # evaluation
 Y_test_preds = torch.argmax(model(torch.tensor(X_test.reshape((-1, 28*28))).float()), dim=1).numpy()
 (Y_test == Y_test_preds).mean()
