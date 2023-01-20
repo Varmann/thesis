@@ -15,3 +15,8 @@ oder
 
 
 geht nur über "anaconda prompt"
+
+
+# git operations
+
+commit with a message and then use "push" to send to github
