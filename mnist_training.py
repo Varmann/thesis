@@ -4,7 +4,9 @@
 import numpy as np
 import gzip
 from tqdm import trange
-import matplotlib as plt
+import matplotlib.pyplot as plt
+
+
 
 def fetch(url):
   import requests, gzip, os, hashlib, numpy
@@ -22,11 +24,16 @@ Y_train = fetch("http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz")[8
 X_test = fetch("http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz")[0x10:].reshape((-1, 28, 28))
 Y_test = fetch("http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz")[8:]
 
-# beispiel, das für alle machen
-with open('path_and_name_of_file_1.gz', "rb") as f:
-  dat = f.read()
-X_train = np.frombuffer(gzip.decompress(dat), dtype=np.uint8).copy()
+#%%
+# script um zufälliges Bild anzuzeigen
 
+samp = np.random.randint(0, X_train.shape[0], size=1)
+random_image = X_train[samp,:,:].reshape((-1, 28*28))
+plt.imshow(random_image)
+
+
+
+#%%
 
 # model
 import torch

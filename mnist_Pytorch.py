@@ -26,22 +26,22 @@ torch.manual_seed(random_seed)
 # The values 0.1307 and 0.3081 used for the Normalize() transformation below are the global mean and standard deviation of the MNIST dataset
 
 train_loader = torch.utils.data.DataLoader(
-  torchvision.datasets.MNIST('/files/', train=True, download=True,
-                             transform=torchvision.transforms.Compose([
-                               torchvision.transforms.ToTensor(),
-                               torchvision.transforms.Normalize(
-                                 (0.1307,), (0.3081,))
-                             ])),
-  batch_size=batch_size_train, shuffle=True)
+    torchvision.datasets.MNIST('/files/', train=True, download=True,
+                                transform=torchvision.transforms.Compose([
+                                torchvision.transforms.ToTensor(),
+                                torchvision.transforms.Normalize(
+                                    (0.1307,), (0.3081,))
+                                ])),
+    batch_size=batch_size_train, shuffle=True)
 
 test_loader = torch.utils.data.DataLoader(
-  torchvision.datasets.MNIST('/files/', train=False, download=True,
-                             transform=torchvision.transforms.Compose([
-                               torchvision.transforms.ToTensor(),
-                               torchvision.transforms.Normalize(
-                                 (0.1307,), (0.3081,))
-                             ])),
-  batch_size=batch_size_test, shuffle=True)
+    torchvision.datasets.MNIST('/files/', train=False, download=True,
+                                transform=torchvision.transforms.Compose([
+                                torchvision.transforms.ToTensor(),
+                                torchvision.transforms.Normalize(
+                                    (0.1307,), (0.3081,))
+                                ])),
+    batch_size=batch_size_test, shuffle=True)
 
 # Now let's take a look at some examples. We'll use the test_loader for this.
 #%%
@@ -117,7 +117,7 @@ def train(epoch):
             train_losses.append(loss.item())
             train_counter.append(
                 (batch_idx*64) + ((epoch-1)*len(train_loader.dataset)))
-            # torch.save(network.state_dict(), '/model.pth')
+            torch.save(network.state_dict(), r'C:\dev\model.pth')
             # torch.save(optimizer.state_dict(), '/results/optimizer.pth')
 
 # Test Loop
@@ -149,7 +149,7 @@ plt.scatter(test_counter, test_losses, color='red')
 plt.legend(['Train Loss', 'Test Loss'], loc='upper right')
 plt.xlabel('number of training examples seen')
 plt.ylabel('negative log likelihood loss')
-fig
+fig.show()
 # %%
 with torch.no_grad():
     output = network(example_data)
@@ -164,5 +164,6 @@ for i in range(6):
         output.data.max(1, keepdim=True)[1][i].item()))
     plt.xticks([])
     plt.yticks([])
-fig
+fig.show()
+
 # %%
