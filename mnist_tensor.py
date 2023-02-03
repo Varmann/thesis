@@ -28,7 +28,7 @@ x_test = keras.utils.normalize(x_test, axis=1)
 
 # %% Erstellung und Training des Künstlichen neuronalen Netzes. 
 model = Sequential()
-#model.add(tf.keras.layers.Flatten())
+model.add(tf.keras.layers.Flatten())
 model.add (Dense(128, activation = 'relu'))
 model.add (Dense(128, activation = 'relu'))
 #Gibt Wahrscheinlichkeiten einzelnen Ziffern aus
@@ -39,7 +39,7 @@ model.compile(optimizer = 'adam', loss = 'sparse_categorical_crossentropy', metr
 
 
 # %% Training des Models , mit allen Trainingsdaten ,  784 Pixel (28x28)
-model.fit(x_train.reshape(-1,784),y_train, epochs=3 ) 
+model.fit(x_train.reshape(-1,784),y_train, epochs= 6 ) 
 
 # %%  Erkennung    # -1 Alle Testdaten 
 var_loss, var_accuracy  = model.evaluate(x_test.reshape(-1,784), y_test)
