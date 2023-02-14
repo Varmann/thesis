@@ -27,3 +27,8 @@ commit with a message and then use "push" to send to github
 # ipython
 
 inside terminal type ipython
+
+# show all packages
+
+conda list
+pip list
