@@ -73,3 +73,28 @@ df = pd.read_csv(r'C:/Users/Vardan/Desktop/Train_Data/my_array.csv')
 print (df)
 
 # %%
+
+#%%
+from pathlib import Path  
+filepath = Path(r'C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data1.csv')  
+filepath.parent.mkdir(parents=True, exist_ok=True)  
+df.to_csv(filepath)  
+
+#%%
+df = pd.DataFrame({
+   'pig': [20, 18, 489, 675, 1776],
+   'horse': [4, 25, 281, 600, 1900]
+   }, index=[1990, 1997, 2003, 2009, 2014])
+lines = df.plot.line()
+# %%
+axes = df.plot.line(subplots=True)
+type(axes)
+# %%
+axes = df.plot.line(
+    subplots=True, color={"pig": "pink", "horse": "#742802"}
+)
+# %%
+#%%
+for Index in range (2,9):
+ print(Index)
+# %%
