@@ -13,9 +13,7 @@ import torchvision
 import pandas as pd
 import time
 
-from BobNet import BobNet
 from LeNet import LeNet
-from LeNet import LeNet_MaxPool
 
 
 for Index in range(2, 9):
@@ -81,7 +79,7 @@ for Index in range(2, 9):
     # ─── Training The Model ───────────────────────────────────────────────────────
 
     # class LeNet(nn.Module):     def __init__(self, filter_size, filters_number_1,filters_number_2):
-    network = LeNet_MaxPool(3, Index*5, Index*10)
+    network = LeNet(3, Index*1, Index*2)
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
     # #On the x-axis we want to display the number of training examples the network has seen during training.

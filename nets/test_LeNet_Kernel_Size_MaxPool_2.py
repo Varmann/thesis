@@ -13,7 +13,7 @@ import torchvision
 import pandas as pd
 import time 
 
-from LeNet import LeNet
+from LeNet import LeNet_2_Same_CNN_Layer
 
 
 for Index in range(2, 9):
@@ -79,7 +79,7 @@ for Index in range(2, 9):
     # ─── Training The Model ───────────────────────────────────────────────────────
 
     # class LeNet(nn.Module):     def __init__(self, filter_size, filters_number_1,filters_number_2):
-    network = LeNet(Index, 5, 10)
+    network = LeNet_2_Same_CNN_Layer(Index, 20)
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
     # #On the x-axis we want to display the number of training examples the network has seen during training.
@@ -152,7 +152,7 @@ for Index in range(2, 9):
     print(TrainingTime)
 
     filename_txt = (
-        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_Kernel_Size.txt"
+        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_MaxPool_Kernel_Size_2.txt"
     )
     text = "\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
         test_loss_correct[0],
@@ -173,7 +173,7 @@ for Index in range(2, 9):
     Loss = round(test_loss_correct[0],5)
     Accurracy = int(test_loss_correct[1])/100
     filename = (
-        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_Kernel_Size.csv"
+        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_MaxPool_Kernel_Size_2.csv"
     )
     df = pd.read_csv(filename, sep=";")
     df.loc[len(df)] = [Kernel_Size, Loss, Accurracy, TrainingTime]

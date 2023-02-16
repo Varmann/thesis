@@ -11,12 +11,12 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import pandas as pd
-import time 
+import time
 
-from LeNet import LeNet
+import BobNets
 
 
-for Index in range(2, 9):
+for Index in range(2, 8):
     # Here the number of epochs defines how many times we'll loop over the complete trai ning dataset,
     # while learning_rate and momentum are hyperparameters for the optimizer we'll be using later on.
     n_epochs = 3
@@ -66,9 +66,9 @@ for Index in range(2, 9):
         batch_size=batch_size_test,
         shuffle=True,
     )
-
+    
     start = time.time()
-
+    
     examples = enumerate(
         test_loader
     )  # The enumerate() function adds a counter to an iterable and returns it (the enumerate object).
@@ -79,7 +79,18 @@ for Index in range(2, 9):
     # ─── Training The Model ───────────────────────────────────────────────────────
 
     # class LeNet(nn.Module):     def __init__(self, filter_size, filters_number_1,filters_number_2):
-    network = LeNet(Index, 5, 10)
+    if(Index == 2):
+        network = BobNets.BobNet_2()
+    if(Index == 3):
+        network = BobNets.BobNet_3()
+    if(Index == 4):
+        network = BobNets.BobNet_4() 
+    if(Index == 5):
+        network = BobNets.BobNet_5()       
+    if(Index == 6):
+        network = BobNets.BobNet_6()   
+    if(Index == 7):
+        network = BobNets.BobNet_7()     
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
     # #On the x-axis we want to display the number of training examples the network has seen during training.
@@ -146,13 +157,15 @@ for Index in range(2, 9):
         train(epoch)
         test(test_loss_correct)
 
-    print("Train Done ", Index)
+    print("Train Done ", Index )
     end = time.time()
     TrainingTime = round(end - start)
     print(TrainingTime)
+    
+    
 
     filename_txt = (
-        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_Kernel_Size.txt"
+        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/BobNets.txt"
     )
     text = "\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
         test_loss_correct[0],
@@ -160,28 +173,28 @@ for Index in range(2, 9):
         len(test_loader.dataset),
         100.0 * test_loss_correct[1] / len(test_loader.dataset),
     )
-    Text_Kernel_Size = 'Kernel Size = '+str(Index) +'  .   Training Time = '+ str(TrainingTime) + ' seconds'
+    Text_Kernel_Number = 'BobNet layers = '+ str(Index) + '  .   Training Time = ' + str(TrainingTime) + ' seconds'
     with open(filename_txt, "a") as fd:
-        fd.write(f"\n{Text_Kernel_Size}")
+        fd.write(f"\n{Text_Kernel_Number}")
         fd.write(f"\n{text}")
         fd.close()
 
     # Save in file
     import pandas as pd
 
-    Kernel_Size = Index
+    Kernel_Number = Index
     Loss = round(test_loss_correct[0],5)
-    Accurracy = int(test_loss_correct[1])/100
+    Accurracy = int(test_loss_correct[1])/100.0
     filename = (
-        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_Kernel_Size.csv"
+        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/BobNets.csv"
     )
     df = pd.read_csv(filename, sep=";")
-    df.loc[len(df)] = [Kernel_Size, Loss, Accurracy, TrainingTime]
+    df.loc[len(df)] = [Kernel_Number, Loss, Accurracy, TrainingTime]
     df.to_csv(filename, sep=";", index=False)
     df = pd.read_csv(filename, sep=";")
 
 
-print("Loop Training Kernel Size Done ")
+print("Loop Training Kernel Number Done ")
 
 
 # %%
