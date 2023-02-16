@@ -1,8 +1,10 @@
 # %%
 # Beispiel from https://nextjournal.com/gkoehler/pytorch-mnist
 
-import matplotlib.pyplot as plt
+import time
 
+import matplotlib.pyplot as plt
+import pandas as pd
 #%%
 # PyTorch has dynamic execution graphs, meaning the computation graph is created on the fly.
 import torch
@@ -10,11 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
-import pandas as pd
-import time 
-
-from LeNet import LeNet
-
+from LeNet import LeNet_MaxPool
 
 for Index in range(2, 9):
     # Here the number of epochs defines how many times we'll loop over the complete trai ning dataset,
@@ -79,7 +77,7 @@ for Index in range(2, 9):
     # ─── Training The Model ───────────────────────────────────────────────────────
 
     # class LeNet(nn.Module):     def __init__(self, filter_size, filters_number_1,filters_number_2):
-    network = LeNet(Index, 5, 10)
+    network = LeNet_MaxPool(Index, 10, 10)
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
     # #On the x-axis we want to display the number of training examples the network has seen during training.
@@ -88,9 +86,24 @@ for Index in range(2, 9):
     test_losses = []
     test_counter = [i * len(train_loader.dataset) for i in range(n_epochs + 1)]
 
+    global_train_batch_counter = [0]
+
+    new_test_accuracy = []
+    new_test_losses = []
+    new_test_batch_counter = []
+
     def train(epoch):
         network.train()
         for batch_idx, (data, target) in enumerate(train_loader):
+            global_train_batch_counter[0] += 1
+            # alle 10 batches wird test() aufgerufen. die liste new_test_accuracy enthält am Ende
+            # alle gemessenen accuracies
+            if global_train_batch_counter[0] % 10 == 0:
+                test_loss, accuracy = test()
+                new_test_accuracy.append(accuracy)
+                new_test_losses.append(test_loss)
+                new_test_batch_counter.append(global_train_batch_counter[0])
+
             optimizer.zero_grad()
             output = network(data)
             loss = F.nll_loss(output, target)
@@ -116,35 +129,33 @@ for Index in range(2, 9):
 
     #test_loss = 0
     #correct = 0
-    test_loss_correct = [0,0]
 
-    def test(test_loss_correct):
+    def test():
         network.eval()
         test_loss = 0
-        correct = 0
+        accuracy = 0
         with torch.no_grad():
             for data, target in test_loader:
                 output = network(data)
                 test_loss += F.nll_loss(output, target, size_average=False).item()
                 pred = output.data.max(1, keepdim=True)[1]
-                correct += pred.eq(target.data.view_as(pred)).sum()
+                accuracy += pred.eq(target.data.view_as(pred)).sum()
         test_loss /= len(test_loader.dataset)
         test_losses.append(test_loss)
         print(
             "\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
                 test_loss,
-                correct,
+                accuracy,
                 len(test_loader.dataset),
-                100.0 * correct / len(test_loader.dataset),
+                100.0 * accuracy / len(test_loader.dataset),
             )
         )
-        test_loss_correct[0] = test_loss
-        test_loss_correct[1] = correct
+        return test_loss, accuracy
 
-    test(test_loss_correct)
-    for epoch in range(1, n_epochs + 1):
+    test_loss_correct = [0, 0]  # delete this
+    for epoch in range(1, n_epochs + 1):  # 3 epochs -> 3* test
         train(epoch)
-        test(test_loss_correct)
+        # test(test_loss_correct)
 
     print("Train Done ", Index)
     end = time.time()
@@ -180,6 +191,9 @@ for Index in range(2, 9):
     df.to_csv(filename, sep=";", index=False)
     df = pd.read_csv(filename, sep=";")
 
+print(new_test_accuracy)
+print(new_test_loss)
+print(new_test_batch_counter)
 
 print("Loop Training Kernel Size Done ")
 

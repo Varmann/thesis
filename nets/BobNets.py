@@ -142,3 +142,6 @@ class BobNet_7(torch.nn.Module):
     x = self.linear7(x)
     x = self.logsoftmax(x)
     return x
+
+
+    
