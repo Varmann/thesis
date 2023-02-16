@@ -11,6 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import pandas as pd
+import time 
 
 from BobNet import BobNet
 from LeNet import LeNet
@@ -68,7 +69,8 @@ for Index in range(2, 9):
         shuffle=True,
     )
 
-    
+    start = time.time()
+
     examples = enumerate(
         test_loader
     )  # The enumerate() function adds a counter to an iterable and returns it (the enumerate object).
@@ -79,7 +81,7 @@ for Index in range(2, 9):
     # ─── Training The Model ───────────────────────────────────────────────────────
 
     # class LeNet(nn.Module):     def __init__(self, filter_size, filters_number_1,filters_number_2):
-    network = LeNet_MaxPool(Index, 20, 50)
+    network = LeNet_MaxPool(3, Index*5, Index*10)
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
     # #On the x-axis we want to display the number of training examples the network has seen during training.
@@ -146,10 +148,13 @@ for Index in range(2, 9):
         train(epoch)
         test(test_loss_correct)
 
-    print("Train Done")
+    print("Train Done ", Index)
+    end = time.time()
+    TrainingTime = round(end - start)
+    print(TrainingTime)
 
     filename_txt = (
-        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_MaxPool.txt"
+        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_MaxPool_Kernel_Size.txt"
     )
     text = "\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
         test_loss_correct[0],
@@ -157,7 +162,7 @@ for Index in range(2, 9):
         len(test_loader.dataset),
         100.0 * test_loss_correct[1] / len(test_loader.dataset),
     )
-    Text_Kernel_Size = 'Kernel Size = '+str(Index)
+    Text_Kernel_Size = 'Kernel Size = '+str(Index) +'  .   Training Time = '+ str(TrainingTime) + ' seconds'
     with open(filename_txt, "a") as fd:
         fd.write(f"\n{Text_Kernel_Size}")
         fd.write(f"\n{text}")
@@ -166,19 +171,19 @@ for Index in range(2, 9):
     # Save in file
     import pandas as pd
 
-    Kernel_size = Index
-    Loss = test_loss_correct[0]
-    Accurracy = 100.0 * test_loss_correct[1] / len(test_loader.dataset)
+    Kernel_Size = Index
+    Loss = round(test_loss_correct[0],5)
+    Accurracy = int(test_loss_correct[1])/100
     filename = (
-        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_MaxPool.csv"
+        r"C:/Users/vmanukyan/Documents/dev/thesis/nets/Training_Data/LeNet_MaxPool_Kernel_Size.csv"
     )
     df = pd.read_csv(filename, sep=";")
-    df.loc[len(df)] = [Kernel_size, Loss, Accurracy]
+    df.loc[len(df)] = [Kernel_Size, Loss, Accurracy, TrainingTime]
     df.to_csv(filename, sep=";", index=False)
     df = pd.read_csv(filename, sep=";")
 
 
-print("Loop Training Kernel size Done ")
+print("Loop Training Kernel Size Done ")
 
 
 # %%
