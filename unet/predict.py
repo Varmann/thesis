@@ -21,63 +21,10 @@ from utils.utils import (
     crop_without_padding,
 )
 
-#### Default values
-# Minimum probability value to consider a mask pixel white
-mask_threshold_dv = float(0.5)
-# checkpoint default path
-model_checkpoint_dv = Path(__file__).parent.resolve() / "checkpoints" / "checkpoint.pth"
-# Default classes number
-n_classes_dv = 2
-
-### Constants
-Tile_Width = 200
-Tile_Padding = 50
-Crop_width = Tile_Width + 2 * Tile_Padding
-# Row
-Row_min = 350
-Row_max = 450 + 1400
-# Column
-Column_min = 230
-Column_max = 230 + 600
-
-vizualise_predict = True
-
-# %%
-
-fpath = Path(__file__).parent.resolve()
-
-data_path = fpath / "data"
-imgs_path = data_path / "imgs"
-predicted_imgs_path = data_path / "imgs_predicted"
-predicted_imgs_path.mkdir(exist_ok=True)
-
-image_file_paths = [str(p) for p in imgs_path.iterdir() if p.is_file()]
-predicted_images_file_paths = [
-    str(predicted_imgs_path / (p.stem + "_OUT.png"))
-    for p in imgs_path.iterdir()
-    if p.is_file()
-]
-
-
-imgs_masks_path = data_path / "imgs_masks"
-imgs_masks_file_path = [
-    str(imgs_masks_path / (p.stem + "_OUT.png"))
-    for p in imgs_path.iterdir()
-    if p.is_file()
-]
-
-
-imgs_masks_path2 = data_path / "imgs_masks//Without_Padding"
-imgs_masks_file_path2 = [
-    str(imgs_masks_path2 / (p.stem + "_OUT.png"))
-    for p in imgs_path.iterdir()
-    if p.is_file()
-]
-
 
 # %%
 def predict_img(
-    net, full_img, device, scale_factor=1.0, out_threshold=mask_threshold_dv
+    net, full_img, device, scale_factor=1.0, out_threshold=0.5
 ):
     net.eval()
     img = torch.from_numpy(
@@ -189,6 +136,53 @@ def mask_to_image(mask: np.ndarray, mask_values):
 
 
 if __name__ == "__main__":
+    #### Default values
+    # Minimum probability value to consider a mask pixel white
+    mask_threshold_dv = float(0.5)
+    # checkpoint default path
+    model_checkpoint_dv = Path(__file__).parent.resolve() / "checkpoints" / "checkpoint.pth"
+    # Default classes number
+    n_classes_dv = 2
+
+    ### Constants
+    Tile_Width = 200
+    Tile_Padding = 50
+    Crop_width = Tile_Width + 2 * Tile_Padding
+    # Row
+    Row_min = 350
+    Row_max = 450 + 1400
+    # Column
+    Column_min = 230
+    Column_max = 230 + 600
+
+    fpath = Path(__file__).parent.resolve()
+
+    data_path = fpath / "data"
+    imgs_path = data_path / "imgs"
+    predicted_imgs_path = data_path / "imgs_predicted"
+    predicted_imgs_path.mkdir(exist_ok=True)
+
+    image_file_paths = [str(p) for p in imgs_path.iterdir() if p.is_file()]
+    predicted_images_file_paths = [
+        str(predicted_imgs_path / (p.stem + "_OUT.png"))
+        for p in imgs_path.iterdir()
+        if p.is_file()
+    ]
+
+    imgs_masks_path = data_path / "imgs_masks"
+    imgs_masks_file_path = [
+        str(imgs_masks_path / (p.stem + "_OUT.png"))
+        for p in imgs_path.iterdir()
+        if p.is_file()
+    ]
+
+    imgs_masks_path2 = data_path / "imgs_masks//Without_Padding"
+    imgs_masks_file_path2 = [
+        str(imgs_masks_path2 / (p.stem + "_OUT.png"))
+        for p in imgs_path.iterdir()
+        if p.is_file()
+    ]
+
     args, unknown = get_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -310,7 +304,7 @@ if __name__ == "__main__":
         ###
         result2 = Image.fromarray(crop(new_image2, 0, 1400, 0, 600))
 
-        if vizualise_predict:
+        if True:
             logging.info(
                 f"Image and Masks saved to {Path(imgs_masks_file_path2[k]).name}"
             )

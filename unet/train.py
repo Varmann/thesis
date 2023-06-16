@@ -21,25 +21,13 @@ from utils.data_loading import BasicDataset, CarvanaDataset
 from utils.dice_score import dice_loss
 
 
-dir_img = Path(__file__).parent.resolve() / "data" / "imgs"
-dir_mask = Path(__file__).parent.resolve() / "data" / "masks"
-dir_checkpoint = Path(__file__).parent.resolve() / "checkpoints"
-# %% Default Values of train model arguments
-epochs_dv = int(10)
-batch_size_dv = int(3)
-learning_rate_dv = float(1e-5)
-# Percent of the data that is used as validation (0-100)
-val_percent_dv = 10 * float(2.0)
-# Default classes number
-n_classes_dv = 2
-
 def train_model(
     model,
     device,
-    epochs: int = epochs_dv,
-    batch_size: int = batch_size_dv,
-    learning_rate: float = learning_rate_dv,
-    val_percent: float = val_percent_dv,
+    epochs: int = 10,
+    batch_size: int = 10,
+    learning_rate: float = 1e-5,
+    val_percent: float = 0.1,
     save_checkpoint: bool = True,
     img_scale: float = 1.0,
     amp: bool = False,
@@ -269,7 +257,7 @@ def get_args():
         "-v",
         dest="val",
         type=float,
-        default=val_percent_dv,
+        default=100*val_percent_dv,
         help="Percent of the data that is used as validation (0-100)",
     )
     parser.add_argument(
@@ -309,6 +297,18 @@ def get_args():
 
 
 if __name__ == "__main__":
+    dir_img = Path(__file__).parent.resolve() / "data" / "imgs"
+    dir_mask = Path(__file__).parent.resolve() / "data" / "masks"
+    dir_checkpoint = Path(__file__).parent.resolve() / "checkpoints"
+    # %% Default Values of train model arguments
+    epochs_dv: int = 10
+    batch_size_dv: int = 3
+    learning_rate_dv: float=1e-5
+    # Percent of the data that is used as validation (0-100)
+    val_percent_dv: float = 0.2
+    # Default classes number
+    n_classes_dv: int = 2
+
     args, unknown = get_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
