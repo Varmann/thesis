@@ -163,10 +163,11 @@ def random_crop_rotate90(image, mask,crop_size, Row_min, Row_max, Column_min ,Co
     return img, msk
 
 
-
-
-# Crop image with padding 
 def crop_without_padding(image_np_array:np.ndarray, Tile_Width :int):
+    """Crop image
+    
+    Crop image with the given padding
+    """
     if(Tile_Width <= 0):
         raise TypeError("Tile_Width must be postive number !")
     ######################################################################################
