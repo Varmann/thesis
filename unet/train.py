@@ -25,7 +25,7 @@ dir_img = Path(__file__).parent.resolve() / 'data' / 'imgs'
 dir_mask = Path(__file__).parent.resolve() / 'data' / 'masks'
 dir_checkpoint = Path(__file__).parent.resolve() / 'checkpoints'
 #%% Default Values of train model arguments
-epochs_dv = int(100)
+epochs_dv = int(5)
 batch_size_dv = int(3)
 learning_rate_dv = float(1e-5)
 #Downscaling factor of the images
@@ -191,7 +191,7 @@ def get_args():
                         help='Percent of the data that is used as validation (0-100)')
     parser.add_argument('--amp', action='store_true', default=False, help='Use mixed precision')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
-    parser.add_argument('--classes', '-c', type=int, default=2, help='Number of classes')
+    parser.add_argument('--classes', '-c', type=int, default=1, help='Number of classes')
    
     return parser.parse_known_args()
 

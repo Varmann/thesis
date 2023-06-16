@@ -1,42 +1,34 @@
-# Thesis
-
-Using pytorch to create a new ai model.
+python predict.py --input /path/to/file.png --output /path/to/file_out.png --model /pathh/to/model.pth
 
 
-## tips
-
-zum installieren von Paketen:
-
-    conda install name
-
-oder besser nicht
-
-    pip install name
-
-to show all pip packages
-
-    pip freeze
-
-geht nur über "anaconda prompt"
+python C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\predict.py --input C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\image_2_1.png --output C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\image_2_1_out.png --model C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\checkpoints\checkpoint.pth --viz
 
 
-# git operations
+----------------------------------------------------------------------------------------------------------------
 
-commit with a message and then use "push" to send to github
-
-# ipython
-
-inside terminal type ipython
-
-# show all packages
-
-conda list
-pip list
-
-# pytorch install for gpu
-conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
+https://docs.python.org/3/library/argparse.html#core-functionality
 
 
-# deinstall
+https://stackoverflow.com/questions/52132076/argparse-action-or-type-for-comma-separated-list
 
-conda remove ipython
+names: List[str] = ['Jane', 'Dave', 'John']
+
+parser = argparse.ArumentParser()
+parser.add_argument('--names', default=names, action=SplitArgs)
+
+args = parser.parse_args()s
+names = args.names
+
+
+
+
+-------------------------------------------
+-------------------------------------------
+python C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\predict.py --input C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\image_2_1.png --output C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\image_2_1_out.png --model C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\checkpoints\checkpoint_epoch5.pth --viz
+
+
+
+--------------------------------------------------------
+python C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\predict.py --viz
+
+

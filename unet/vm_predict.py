@@ -1,13 +1,17 @@
-
+#%%
+from pathlib import Path
 # python C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\predict.py 
 # --input C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\image_2_1.png 
 # --output C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\image_2_1_out.png 
 # --model C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\checkpoints\checkpoint_epoch5.pth 
-#%% Defualt
+#%% Default values
 # Scale factor for the input images
 img_scale_dv  = float(1.0)
 # Minimum probability value to consider a mask pixel white
-mask_threshold_dv = float(0.9)
+mask_threshold_dv = float(0.5)
+# checkpoint default path
+model_checkpoint_dv = Path(__file__).parent.resolve() / 'checkpoints' / 'checkpoint.pth'
+
 
 #%% Constants
 Tile_Width = 200 
@@ -38,6 +42,7 @@ from unet import UNet
 from utils.utils import plot_img_and_mask , plot_img_and_mask_save,plot_img_and_mask_save_3, crop , crop_with_padding, crop_without_padding
 
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 fpath = Path(__file__).parent.resolve()
 
@@ -70,9 +75,10 @@ def predict_img(net,
 
     with torch.no_grad():
         output = net(img).cpu()
+        #plt.imshow(output[0,0,:,:])
         output = F.interpolate(output, (full_img.size[1], full_img.size[0]), mode='bilinear')
         if net.n_classes > 1:
-            mask = output.argmax(dim=1)
+            mask = output.argmax(dim=1)         
         else:
             mask = torch.sigmoid(output) > out_threshold
 
@@ -81,7 +87,7 @@ def predict_img(net,
 
 def get_args():
     parser = argparse.ArgumentParser(description='Predict masks from input images')
-    parser.add_argument('--model', '-m', default=r'C:/Users/vmanukyan/Documents/dev/thesis/nets/Nets/Unet/github/checkpoints/checkpoint.pth', metavar='FILE',
+    parser.add_argument('--model', '-m', default=model_checkpoint_dv, metavar='FILE',
                         help='Specify the file in which the model is stored')
     parser.add_argument('--input', '-i', metavar='INPUT', default=image_file_paths, nargs='+', help='Filenames of input images', required=False)
     parser.add_argument('--output', '-o', metavar='OUTPUT', default=predicted_images_file_paths, nargs='+', help='Filenames of output images')
@@ -134,7 +140,7 @@ if __name__ == '__main__':
     net = UNet(n_channels=1, n_classes=args.classes, bilinear=args.bilinear)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    logging.info(f'Loading model {(args.model).split(os.sep)[-1]}')
+    logging.info(f'Loading model {(args.model.name)}')
     logging.info(f'Using device {device}')
 
     net.to(device=device)
@@ -145,7 +151,7 @@ if __name__ == '__main__':
     logging.info('Model loaded!')
 
     for k, filename in enumerate(in_files):
-        logging.info(f'Predicting image " {filename.split(os.sep)[-1]} " ...')
+        logging.info(f'Predicting image " {Path(filename).name} " ...')
         img = np.asarray(Image.open(filename))
         
 
@@ -191,10 +197,10 @@ if __name__ == '__main__':
             out_filename = out_files[k]
            
             result.save(out_filename)
-            logging.info(f'Mask saved to {out_filename.split(os.sep)[-1]}')
+            logging.info(f'Mask saved to {Path(out_filename).name}')
 
         if args.viz:
-            logging.info(f'Visualizing results for image {filename}, close to continue...')
+            logging.info(f'Visualizing results for image {Path(filename).name}, close to continue...')
             plot_img_and_mask(image, result)
         
         # if vizualise_predict:
@@ -235,8 +241,8 @@ if __name__ == '__main__':
         result2  = Image.fromarray(crop(new_image2,0,1400,0,600))
 
         if vizualise_predict:            
-            logging.info(f'Image and Masks saved to {imgs_masks_file_path2[k].split(os.sep)[-2]}')
-            logging.info(f'Visualizing Masks for image "{filename.split(os.sep)[-1]}"')
+            logging.info(f'Image and Masks saved to {Path(imgs_masks_file_path2[k]).name}')
+            logging.info(f'Visualizing Masks for image "{Path(filename).name}"')
             #plot_img_and_mask(image, result)            
             plot_img_and_mask_save_3(image,result, result2, imgs_masks_file_path2[k])
             

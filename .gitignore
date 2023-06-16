@@ -1,14 +1,6 @@
-results/
-results2/
-tmp/
-train-images-idx3-ubyte.gz
-*.png
 *.pth
+*.png
 *.pyc
-*.gz
-other/
-Lenet/
-*ubyte
 *test*
 *log
 *wandb*
@@ -16,3 +8,7 @@ Lenet/
 *plot*
 *.csv
 *.txt
+
+unet/data/
+unet/wandb/
+unet/checkpoints/
