@@ -2,3 +2,17 @@ results/
 results2/
 tmp/
 train-images-idx3-ubyte.gz
+*.png
+*.pth
+*.pyc
+*.gz
+other/
+Lenet/
+*ubyte
+*test*
+*log
+*wandb*
+*wandb
+*plot*
+*.csv
+*.txt

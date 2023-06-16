@@ -32,3 +32,11 @@ inside terminal type ipython
 
 conda list
 pip list
+
+# pytorch install for gpu
+conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
+
+
+# deinstall
+
+conda remove ipython
