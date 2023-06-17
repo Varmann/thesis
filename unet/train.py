@@ -20,6 +20,7 @@ from unet import UNet
 from utils.data_loading import BasicDataset, CarvanaDataset
 from utils.dice_score import dice_loss
 
+from defaults import *
 
 def train_model(
     model,
@@ -27,7 +28,7 @@ def train_model(
     epochs: int = 10,
     batch_size: int = 10,
     learning_rate: float = 1e-5,
-    val_percent: float = 0.1,
+    val_percent: float = 10,
     save_checkpoint: bool = True,
     img_scale: float = 1.0,
     amp: bool = False,
@@ -37,12 +38,12 @@ def train_model(
 ):
     # 1. Create dataset
     try:
-        dataset = CarvanaDataset(dir_img, dir_mask, img_scale)
+        dataset = CarvanaDataset(DIR_IMG, DIR_MASKS, img_scale)
     except (AssertionError, RuntimeError, IndexError):
-        dataset = BasicDataset(dir_img, dir_mask, img_scale)
+        dataset = BasicDataset(DIR_IMG, DIR_MASKS, img_scale)
 
     # 2. Split into train / validation partitions
-    n_val = int(len(dataset) * val_percent)
+    n_val = int(len(dataset) * (val_percent/100))
     n_train = len(dataset) - n_val
     train_set, val_set = random_split(
         dataset, [n_train, n_val], generator=torch.Generator().manual_seed(0)
@@ -154,7 +155,7 @@ def train_model(
                 )
                 pbar.set_postfix(**{"loss (batch)": loss.item()})
 
-                # Evaluation round
+                #TODO: Evaluation round
                 division_step = n_train // (5 * batch_size)
                 if division_step > 0:
                     if global_step % division_step == 0:
@@ -199,14 +200,14 @@ def train_model(
                             pass
 
         if save_checkpoint:
-            Path(dir_checkpoint).mkdir(parents=True, exist_ok=True)
+            #Path(DIR_CHECKPOINTS).mkdir(parents=True, exist_ok=True)
             state_dict = model.state_dict()
             state_dict["mask_values"] = dataset.mask_values
             # torch.save(
-            #     state_dict, str(dir_checkpoint / f"checkpoint_epoch{epoch}.pth")
+            #     state_dict, str(DIR_CHECKPOINTS / f"checkpoint_epoch{epoch}.pth")
             # )
             # Every time saves the as last checkpoint.
-            torch.save(state_dict, str(dir_checkpoint / "checkpoint.pth"))
+            torch.save(state_dict, MODEL_CHECKPOINT)
             logging.info(f"Checkpoint {epoch} saved!")
 
 
@@ -220,7 +221,7 @@ def get_args():
         "-e",
         metavar="E",
         type=int,
-        default=epochs_dv,
+        default=EPOCHS,
         help="Number of epochs",
     )
     parser.add_argument(
@@ -229,7 +230,7 @@ def get_args():
         dest="batch_size",
         metavar="B",
         type=int,
-        default=batch_size_dv,
+        default=BATCH_SIZE,
         help="Batch size",
     )
     parser.add_argument(
@@ -237,7 +238,7 @@ def get_args():
         "-l",
         metavar="LR",
         type=float,
-        default=learning_rate_dv,
+        default=LEARNING_RATE,
         help="Learning rate",
         dest="lr",
     )
@@ -248,7 +249,7 @@ def get_args():
         "--scale",
         "-s",
         type=float,        
-        default=1.0,
+        default=IMAGE_SCALE,
         choices=[1.0],
         help="Downscaling factor of the images",
     )
@@ -257,7 +258,7 @@ def get_args():
         "-v",
         dest="val",
         type=float,
-        default=100*val_percent_dv,
+        default = VAL_PERCENT,
         help="Percent of the data that is used as validation (0-100)",
     )
     parser.add_argument(
@@ -267,13 +268,13 @@ def get_args():
         "--bilinear", action="store_true", default=False, help="Use bilinear upsampling"
     )
     parser.add_argument(
-        "--classes", "-c", type=int, default=n_classes_dv, help="Number of classes"
+        "--classes", "-c", type=int, default = N_CLASSES, help="Number of classes"
     )
 
     (args, unknown) = parser.parse_known_args()
 
     # load from specific checkpoint
-    # args.load = dir_checkpoint / 'checkpoint.pth'
+    args.load = MODEL_CHECKPOINT
     print(args)
     return (args, unknown)
 
@@ -297,18 +298,6 @@ def get_args():
 
 
 if __name__ == "__main__":
-    dir_img = Path(__file__).parent.resolve() / "data" / "imgs"
-    dir_mask = Path(__file__).parent.resolve() / "data" / "masks"
-    dir_checkpoint = Path(__file__).parent.resolve() / "checkpoints"
-    # %% Default Values of train model arguments
-    epochs_dv: int = 10
-    batch_size_dv: int = 3
-    learning_rate_dv: float=1e-5
-    # Percent of the data that is used as validation (0-100)
-    val_percent_dv: float = 0.2
-    # Default classes number
-    n_classes_dv: int = 2
-
     args, unknown = get_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -344,7 +333,7 @@ if __name__ == "__main__":
             learning_rate=args.lr,
             device=device,
             img_scale=args.scale,
-            val_percent=args.val / 100,
+            val_percent=args.val,
             amp=args.amp,
         )
     except torch.cuda.OutOfMemoryError:  # type: ignore

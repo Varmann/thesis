@@ -21,6 +21,7 @@ from utils.utils import (
     crop_without_padding,
 )
 
+from defaults import * 
 
 # %%
 def predict_img(
@@ -52,7 +53,7 @@ def get_args():
     parser.add_argument(
         "--model",
         "-m",
-        default=model_checkpoint_dv,
+        default=MODEL_CHECKPOINT,
         metavar="FILE",
         help="Specify the file in which the model is stored",
     )
@@ -60,7 +61,7 @@ def get_args():
         "--input",
         "-i",
         metavar="INPUT",
-        default=image_file_paths,
+        default=IMAGE_FILE_PATHS,
         nargs="+",
         help="Filenames of input images",
         required=False,
@@ -69,7 +70,7 @@ def get_args():
         "--output",
         "-o",
         metavar="OUTPUT",
-        default=predicted_images_file_paths,
+        default=PREDICTED_IMAGES_FILES_PATH,
         nargs="+",
         help="Filenames of output images",
     )
@@ -86,7 +87,7 @@ def get_args():
         "--mask-threshold",
         "-t",
         type=float,
-        default=mask_threshold_dv,
+        default=MASK_THRESHOLD,
         help="Minimum probability value to consider a mask pixel white",
     )
     parser.add_argument(
@@ -101,7 +102,7 @@ def get_args():
         "--bilinear", action="store_true", default=False, help="Use bilinear upsampling"
     )
     parser.add_argument(
-        "--classes", "-c", type=int, default=n_classes_dv, help="Number of classes"
+        "--classes", "-c", type=int, default=N_CLASSES, help="Number of classes"
     )
     (args, unknown) = parser.parse_known_args()
     print(' '.join(f'{k}={v}' for k, v in vars(args).items() if k not in ['input', 'output']))
@@ -136,59 +137,14 @@ def mask_to_image(mask: np.ndarray, mask_values):
 
 
 if __name__ == "__main__":
-    #### Default values
-    # Minimum probability value to consider a mask pixel white
-    mask_threshold_dv = float(0.5)
-    # checkpoint default path
-    model_checkpoint_dv = Path(__file__).parent.resolve() / "checkpoints" / "checkpoint.pth"
-    # Default classes number
-    n_classes_dv = 2
 
-    ### Constants
-    Tile_Width = 200
-    Tile_Padding = 50
-    Crop_width = Tile_Width + 2 * Tile_Padding
-    # Row
-    Row_min = 350
-    Row_max = 450 + 1400
-    # Column
-    Column_min = 230
-    Column_max = 230 + 600
-
-    fpath = Path(__file__).parent.resolve()
-
-    data_path = fpath / "data"
-    imgs_path = data_path / "imgs"
-    predicted_imgs_path = data_path / "imgs_predicted"
-    predicted_imgs_path.mkdir(exist_ok=True)
-
-    image_file_paths = [str(p) for p in imgs_path.iterdir() if p.is_file()]
-    predicted_images_file_paths = [
-        str(predicted_imgs_path / (p.stem + "_OUT.png"))
-        for p in imgs_path.iterdir()
-        if p.is_file()
-    ]
-
-    imgs_masks_path = data_path / "imgs_masks"
-    imgs_masks_file_path = [
-        str(imgs_masks_path / (p.stem + "_OUT.png"))
-        for p in imgs_path.iterdir()
-        if p.is_file()
-    ]
-
-    imgs_masks_path2 = data_path / "imgs_masks//Without_Padding"
-    imgs_masks_file_path2 = [
-        str(imgs_masks_path2 / (p.stem + "_OUT.png"))
-        for p in imgs_path.iterdir()
-        if p.is_file()
-    ]
 
     args, unknown = get_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     in_files = args.input
     # out_files = get_output_filenames(args)
-    out_files = predicted_images_file_paths
+    out_files = PREDICTED_IMAGES_FILES_PATH
     # print(out_files)
 
     net = UNet(n_channels=1, n_classes=args.classes, bilinear=args.bilinear)
@@ -211,12 +167,10 @@ if __name__ == "__main__":
         #####################################################################################
         logging.info("Croping with padding")
         # crop image
-        y = Row_min
-        x = Column_min
-        image = img[y : y + 1400, x : x + 600]
+        image = img[ROW_MIN : ROW_MIN + HEIGHT, COL_MIN : COL_MIN + WIDTH]
 
         # Reflect / Crop
-        croped_images, number_crops = crop_with_padding(image, Tile_Width, Tile_Padding)
+        croped_images, number_crops = crop_with_padding(image, TILE_WIDTH, TILE_PADDING)
         masks = {}
         h = number_crops[0]  # horizontal
         v = number_crops[1]  # vertical
@@ -236,11 +190,11 @@ if __name__ == "__main__":
         # Add together
         for i in range(0, v):
             image_add = crop(
-                masks[h * i], Tile_Padding, Tile_Width, Tile_Padding, Tile_Width
+                masks[h * i], TILE_PADDING, TILE_WIDTH, TILE_PADDING, TILE_WIDTH
             )
             for j in range(1, h):
                 img_crop = crop(
-                    masks[h * i + j], Tile_Padding, Tile_Width, Tile_Padding, Tile_Width
+                    masks[h * i + j], TILE_PADDING, TILE_WIDTH, TILE_PADDING, TILE_WIDTH
                 )
                 image_add = np.concatenate((image_add, img_crop), axis=1)
             if i == 0:
@@ -263,16 +217,11 @@ if __name__ == "__main__":
             )
             plot_img_and_mask(image, result)
 
-        # if vizualise_predict:
-        #     logging.info(f'Visualizing results for image {filename}, close to continue...')
-        #     #plot_img_and_mask(image, result)
-        #     plot_img_and_mask_save(image, result, imgs_masks_file_path[k])
-
         #####################################################################################
         logging.info("Croping without padding")
         # Reflect / Crop  without padding
         croped_images2, number_crops2 = crop_without_padding(
-            image, (Tile_Width + 2 * Tile_Padding)
+            image, (TILE_WIDTH + 2 * TILE_PADDING)
         )
         masks2 = {}
         h2 = number_crops2[0]  # horizontal
@@ -302,15 +251,15 @@ if __name__ == "__main__":
                 new_image2 = np.concatenate((new_image2, image_add2), axis=0)
 
         ###
-        result2 = Image.fromarray(crop(new_image2, 0, 1400, 0, 600))
+        result2 = Image.fromarray(crop(new_image2, 0, HEIGHT, 0, WIDTH))
 
         if True:
             logging.info(
-                f"Image and Masks saved to {Path(imgs_masks_file_path2[k]).name}"
+                f"Image and Masks plots saved to {SAVE_PLOTS_FILES_PATH[k]}"
             )
             logging.info(f'Visualizing Masks for image "{Path(filename).name}"')
             # plot_img_and_mask(image, result)
-            plot_img_and_mask_save_3(image, result, result2, imgs_masks_file_path2[k])
+            plot_img_and_mask_save_3(image, result, result2, SAVE_PLOTS_FILES_PATH[k])
 
 
 # %%

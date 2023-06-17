@@ -54,6 +54,10 @@ def plot_img_and_mask_save_3(img, mask_padding , mask_no_padding, filename):
 
 # Crop image with padding 
 def crop_with_padding(image_np_array:np.ndarray, Tile_Width :int, Tile_Padding:int):
+    """ Reflect image UP and LEFT with Tile_Padding ,
+     DOWN and RIGHT to be able to crop with the size of
+    [Tile_Width + 2* Tile_Padding] minimum as many times as with the size of Tile_Width
+    """
     if(Tile_Width <= 0):
         raise TypeError("Tile_Width must be postive number !")
     if(Tile_Padding <= 0 ):
@@ -132,10 +136,10 @@ def crop(image:np.ndarray, y:int,height:int, x:int, width:int) :
 
 
 def random_crop_rotate90(image, mask,crop_size, Row_min, Row_max, Column_min ,Column_max):    
-    #print("********** Image and Mask shapes *********")
-    #print(image.shape, mask.shape)
-    #print("******************************************")
-    
+    """Between Row_min/_max and Column_min/_max
+     Random Crop of [crop_size x crop_size] and
+     Random Rotate of multiple of 90 Degree.
+    """
     # image size 1920x1080         
     Row_random = random.randint(Row_min , Row_max)   
     Column_random = random.randint(Column_min , Column_max)
@@ -164,9 +168,7 @@ def random_crop_rotate90(image, mask,crop_size, Row_min, Row_max, Column_min ,Co
 
 
 def crop_without_padding(image_np_array:np.ndarray, Tile_Width :int):
-    """Crop image
-    
-    Crop image with the given padding
+    """ Reflect image at Edges to crop with [Tile_Width x Tile_Width] and Crop    
     """
     if(Tile_Width <= 0):
         raise TypeError("Tile_Width must be postive number !")

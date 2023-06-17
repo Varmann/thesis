@@ -13,6 +13,8 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 from utils.utils import plot_img_and_mask , random_crop_rotate90
 
+from defaults import *
+
 def load_image(filename):
     ext = splitext(filename)[1]
     if ext == '.npy':
@@ -113,18 +115,15 @@ class BasicDataset(Dataset):
 
         # TODO Random Crop 300x300 oder andere Augmentation(Spiegeln, 90Grad drehen).
         # Jedes Bild nur einmal, stattdessen sehr viele epochs.
-               
-        crop_size = 300
-        # Rows min max for Random Row 
-        Row_min = 350
-        Row_max  = 350 + 1400 - crop_size
-        #Columns min max for Random Column 
-        Column_min = 230 
-        Column_max  = 230 + 600 - crop_size 
+       
+        # Row max for Random Row         
+        Row_max  = ROW_MIN + HEIGHT - CROP_SIZE
+        #Column max for Random Column 
+        Column_max  = COL_MIN + WIDTH - CROP_SIZE 
        
         # For the crop array must be two dimensional . Hier  the image has the shape of [1,1980,1080]
         image  = img[0, :,:]
-        croped_image, croped_mask =  random_crop_rotate90(image, mask, crop_size, Row_min, Row_max, Column_min ,Column_max)    
+        croped_image, croped_mask =  random_crop_rotate90(image, mask, CROP_SIZE, ROW_MIN, Row_max, COL_MIN ,Column_max)    
         
         ## Hier the image has to be of the shape of [1,300,300]
         croped_image = croped_image[None , : ]
