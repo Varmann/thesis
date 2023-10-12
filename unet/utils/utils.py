@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+from PIL import Image
 
 # def plot_img_and_mask(img, mask):    
 #     classes = mask.max() + 1
@@ -22,34 +23,82 @@ def plot_img_and_mask(img, mask):
     ax[0].set_title('Input image')
     ax[0].imshow(img)
     ax[1].set_title('Mask') 
-    ax[1].imshow(mask)     
-   
+    ax[1].imshow(mask,vmin=0, vmax=1)
     plt.show()
 
-def plot_img_and_mask_save(img, mask ,filename):   
-    fig, ax = plt.subplots(1, 2,facecolor = "lightgrey", dpi = 200)
+
+def plot_img_imgmsk_mask_predicts_save(img, imgmsk,mask , predict,  predict_no_padding, filename, show = False):   
+    fig, ax = plt.subplots(1, 5,facecolor = "lightgrey", dpi = 600)
     [ax_i.set_axis_off() for ax_i in ax.ravel()]   
     plt.style.use('grayscale')
-    ax[0].set_title('Input image')
-    ax[0].imshow(img)
+    ### 
+    ax[0].set_title('Image')
+    ax[0].imshow(img,vmin=0, vmax=255)
+    ###
     ax[1].set_title('Mask')
-    ax[1].imshow(mask) 
-    plt.savefig(filename,facecolor='lightgrey')    
-    plt.show()
+    ax[1].imshow(mask, vmin=0, vmax=1) 
+    ##
+    ax[2].set_title('Image+Predict')
+    ax[2].imshow(imgmsk,vmin=0, vmax=255)    
+    ###
+    ax[3].set_title('Predict')
+    #ax[3].imshow(predict)
+    ax[3].imshow(predict, vmin=0, vmax=1)
+    ###
+    ax[4].set_title('No Padding')
+    #ax[3].imshow(predict_no_padding)
+    ax[4].imshow(predict_no_padding, vmin=0, vmax=1)
+    ###
+    plt.savefig(filename,facecolor='lightgrey',bbox_inches='tight')    
+    if(show):
+        plt.show()
 
 
-def plot_img_and_mask_save_3(img, mask_padding , mask_no_padding, filename):   
-    fig, ax = plt.subplots(1, 3,facecolor = "lightgrey", dpi = 200)
+def plot_img_imgmsk_predicts_save(img, imgmsk, predict,  predict_no_padding, filename, show = False):   
+    fig, ax = plt.subplots(1, 4,facecolor = "lightgrey", dpi = 600)
     [ax_i.set_axis_off() for ax_i in ax.ravel()]   
     plt.style.use('grayscale')
+    ### 
     ax[0].set_title('Input image')
-    ax[0].imshow(img)
-    ax[1].set_title('Mask padding')
-    ax[1].imshow(mask_padding) 
-    ax[2].set_title('Mask no padding')
-    ax[2].imshow(mask_no_padding)
-    plt.savefig(filename,facecolor='lightgrey')    
-    plt.show()
+    ax[0].imshow(img,vmin=0, vmax=255)
+    #
+    ax[1].set_title('Image+Predict')
+    ax[1].imshow(imgmsk,vmin=0, vmax=255)
+    ###
+    ax[2].set_title('Predict')
+    ax[2].imshow(predict, vmin=0, vmax=1)
+    ###s
+    ax[3].set_title('No Padding')
+    ax[3].imshow(predict_no_padding, vmin=0, vmax=1)
+    ###
+    plt.savefig(filename,facecolor='lightgrey',bbox_inches='tight')    
+    if(show):
+        plt.show()
+
+
+def plot_reflected_save(input_img,img, img_refl, refl_padd,  predict_padd, filename, show = False):   
+    fig, ax = plt.subplots(1, 5,facecolor = "lightgrey", dpi = 600)
+    [ax_i.set_axis_off() for ax_i in ax.ravel()]   
+    plt.style.use('grayscale')
+    #
+    ax[0].set_title('Input')
+    ax[0].imshow(input_img)
+    ### 
+    ax[1].set_title('Crop')
+    ax[1].imshow(img)
+    #
+    ax[2].set_title('Reflected')
+    ax[2].imshow(img_refl)
+    ###
+    ax[3].set_title('Padding')
+    ax[3].imshow(refl_padd)
+    ###s
+    ax[4].set_title('Predict')
+    ax[4].imshow(predict_padd)
+    ###
+    plt.savefig(filename,facecolor='lightgrey',bbox_inches='tight')    
+    if(show):
+        plt.show()
 
 
 # Crop image with padding 
@@ -115,7 +164,7 @@ def crop_with_padding(image_np_array:np.ndarray, Tile_Width :int, Tile_Padding:i
             image_teil = image_reflected[y:y+Crop_width, x:x+Crop_width]
             croped_images.append( image_teil ) 
     # Return Array of Croped Images
-    return croped_images , number_crops
+    return image_reflected, croped_images , number_crops
 
 # crop image 
 # y - Height, x - width
@@ -135,7 +184,7 @@ def crop(image:np.ndarray, y:int,height:int, x:int, width:int) :
     return image_teil
 
 
-def random_crop_rotate90(image, mask,crop_size, Row_min, Row_max, Column_min ,Column_max):    
+def random_crop_rotate90(image_np_array: np.ndarray, mask_np_array: np.ndarray, crop_size: int, Row_min: int, Row_max: int, Column_min: int, Column_max: int):    
     """Between Row_min/_max and Column_min/_max
      Random Crop of [crop_size x crop_size] and
      Random Rotate of multiple of 90 Degree.
@@ -148,8 +197,8 @@ def random_crop_rotate90(image, mask,crop_size, Row_min, Row_max, Column_min ,Co
     
     y = Row_random
     x = Column_random
-    croped_image  = crop(image,y,crop_size, x,crop_size)
-    croped_mask  = crop(mask,y,crop_size, x,crop_size)
+    croped_image  = crop(image_np_array,y,crop_size, x,crop_size)
+    croped_mask  = crop(mask_np_array,y,crop_size, x,crop_size)
     
     #plot_img_and_mask(croped_image, croped_mask)
 
@@ -161,13 +210,13 @@ def random_crop_rotate90(image, mask,crop_size, Row_min, Row_max, Column_min ,Co
     msk = np.rot90(croped_mask, k_Random)
     
     if(croped_image.shape[0] != crop_size | croped_image.shape[1] != crop_size ):
-        raise TypeError("Error : Croped Image Shape is not equal to Crop size !" ,croped_image.shape )
+        raise TypeError("Error : Croped Image Size is not equal to Crop size !" ,croped_image.shape )
     elif(croped_mask.shape[0] != crop_size | croped_mask.shape[1] != crop_size ):
-        raise TypeError("Error : Croped Mask Shape is not equal to Crop size Error !" ,croped_mask.shape )   
+        raise TypeError("Error : Croped Mask Size is not equal to Crop size Error !" ,croped_mask.shape )   
     return img, msk
 
 
-def crop_without_padding(image_np_array:np.ndarray, Tile_Width :int):
+def crop_without_padding(image_np_array: np.ndarray, Tile_Width :int):
     """ Reflect image at Edges to crop with [Tile_Width x Tile_Width] and Crop    
     """
     if(Tile_Width <= 0):
@@ -222,3 +271,98 @@ def crop_without_padding(image_np_array:np.ndarray, Tile_Width :int):
             croped_images.append( image_teil ) 
     # Return Array of Croped Images
     return croped_images , number_crops
+
+
+
+
+def pil_imgs_random_crop_rotate90_flip(pil_image: Image, pil_mask: Image,crop_size: int, Row_min: int, Row_max: int, Column_min: int ,Column_max: int):
+    """Between Row_min/_max and Column_min/_max
+     1. Random Crop of [crop_size x crop_size] and
+     2. Random Rotate of multiple of 90 Degree.
+     3. Random Flip vertical or horizontal.
+    """
+    # image size 1920x1080         
+    Row_random = random.randint(Row_min , Row_max)   
+    Column_random = random.randint(Column_min , Column_max)
+    #print("Random Column ,Row")
+    #print(Row_random,Column_random)
+
+    #im.crop((left, top, right, bottom))
+    left    =  Column_random
+    top     =  Row_random
+    right   =  Column_random + crop_size
+    bottom  =  Row_random + crop_size
+    croped_image  = pil_image.crop((left, top, right, bottom))
+    croped_mask   = pil_mask.crop((left, top, right, bottom))
+    
+    #plot_img_and_mask(croped_image, croped_mask)
+
+    # Random Rotate at 90 degree
+    k_Random = random.randint(0 , 3)        
+    angle  = k_Random * 90  
+    #print("Random Degree", k_Random * 90)
+
+    img_rotate = croped_image.rotate(angle)
+    msk_rotate = croped_mask.rotate(angle)
+
+    
+    j_Random = random.randint(0 , 2)   
+    if(j_Random == 0):
+        img = img_rotate
+        msk = msk_rotate
+    elif (j_Random == 1):
+        img = img_rotate.transpose(Image.FLIP_LEFT_RIGHT)
+        msk = msk_rotate.transpose(Image.FLIP_LEFT_RIGHT)
+    elif(j_Random == 2):
+        img = img_rotate.transpose(Image.FLIP_TOP_BOTTOM)
+        msk = msk_rotate.transpose(Image.FLIP_TOP_BOTTOM)
+    else :
+        raise TypeError("Random int is not 0,1 or2 !",j_Random)
+        
+    # fig, ax = plt.subplots(1, 5,facecolor = "lightgrey", dpi = 200)
+    # [ax_i.set_axis_off() for ax_i in ax.ravel()]   
+    # plt.style.use('grayscale')
+    # ### 
+    # ax[0].imshow(croped_image)
+    # ###
+    # ax[1].set_title(str(angle))
+    # ax[1].imshow(img_rotate) 
+    # ###
+    # ax[2].imshow(msk_rotate,vmin=0, vmax=1)
+    # ###
+    # ax[3].set_title(str(j_Random))
+    # ax[3].imshow(img)
+    # ax[4].imshow(msk, vmin=0, vmax=1)
+    # #
+    # plt.show()
+
+
+    if(img.size  != (crop_size,crop_size)):
+        raise TypeError("Error : Croped Image Size is not equal to Crop size !" ,croped_image.size )
+    elif(msk.size  != (crop_size,crop_size)):
+        raise TypeError("Error : Croped Mask Size is not equal to Crop size Error !" ,croped_mask.size )   
+    return img, msk
+
+
+
+
+def pil_images_combine(img_list:np.ndarray, img_width,img_height, h:int , v:int , space:int , bachground = "white" ):
+    """Combine Image list to one image.img_width
+     1. img_list: List of Images.
+     2. img_width : Image width of the image in list.
+     3. img_height : Image heigth of the image in list.
+     4. h: number of images to be combined horizontally.
+     5. v: number of images to be combined vertically.
+     6. space: pixel value for space between the part images.
+     7. bachground : bachground color .
+    """
+    new_width = h*img_width + (h+1)*space
+    new_height= v*img_height + (v+1)*space
+    new_image = Image.new(mode="L",size=(new_width,new_height), color=bachground )
+    for i in range (0,v):   
+        for j in range (0,h):
+            y_pos = space + j*img_height + j*space
+            x_pos = space + i*img_width + i*space
+            img = Image.fromarray(img_list[h*i+j])
+            new_image.paste(img,(y_pos,x_pos))
+    return new_image

@@ -7,26 +7,18 @@ import os
 import numpy as np
 import torch
 import torch.nn.functional as F
-from PIL import Image
+from PIL import Image , ImageFilter
 from torchvision import transforms
 
 from utils.data_loading import BasicDataset
 from unet import UNet
-from utils.utils import (
-    plot_img_and_mask,
-    plot_img_and_mask_save,
-    plot_img_and_mask_save_3,
-    crop,
-    crop_with_padding,
-    crop_without_padding,
-)
+from utils.utils import *
+from defaults import *
 
-from defaults import * 
+import matplotlib.pyplot as plt
 
 # %%
-def predict_img(
-    net, full_img, device, scale_factor=1.0, out_threshold=0.5
-):
+def predict_img(net, full_img, device, scale_factor=1.0, out_threshold=0.5):
     net.eval()
     img = torch.from_numpy(
         BasicDataset.preprocess(None, full_img, scale_factor, is_mask=False)
@@ -36,7 +28,6 @@ def predict_img(
 
     with torch.no_grad():
         output = net(img).cpu()
-        # plt.imshow(output[0,0,:,:])
         output = F.interpolate(
             output, (full_img.size[1], full_img.size[0]), mode="bilinear"
         )
@@ -61,7 +52,7 @@ def get_args():
         "--input",
         "-i",
         metavar="INPUT",
-        default=IMAGE_FILE_PATHS,
+        default=IMAGE_FILES_PATH,
         nargs="+",
         help="Filenames of input images",
         required=False,
@@ -105,8 +96,6 @@ def get_args():
         "--classes", "-c", type=int, default=N_CLASSES, help="Number of classes"
     )
     (args, unknown) = parser.parse_known_args()
-    print(' '.join(f'{k}={v}' for k, v in vars(args).items() if k not in ['input', 'output']))
-
     return (args, unknown)
 
 
@@ -137,10 +126,14 @@ def mask_to_image(mask: np.ndarray, mask_values):
 
 
 if __name__ == "__main__":
-
-
     args, unknown = get_args()
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")       
+
+    model_args = " ".join(
+        f"{k}={v}" for k, v in vars(args).items() if k not in ["input", "output", "model"]
+    )
+    logging.info(f"Model args -> {model_args}")
+
 
     in_files = args.input
     # out_files = get_output_filenames(args)
@@ -150,8 +143,8 @@ if __name__ == "__main__":
     net = UNet(n_channels=1, n_classes=args.classes, bilinear=args.bilinear)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.info(f"Loading model {(args.model.name)}")
-    logging.info(f"Using device {device}")
+    logging.info(f"Loading model -> {(args.model.name)}")
+    logging.info(f"Using device -> {device}")
 
     net.to(device=device)
     state_dict = torch.load(args.model, map_location=device)
@@ -161,20 +154,23 @@ if __name__ == "__main__":
     logging.info("Model loaded!")
 
     for k, filename in enumerate(in_files):
-        logging.info(f'Predicting image " {Path(filename).name} " ...')
-        img = np.asarray(Image.open(filename))
+        logging.info(f'Predicting image -> {Path(filename).name} ...')
+        img = np.array(Image.open(filename))
 
         #####################################################################################
         logging.info("Croping with padding")
         # crop image
         image = img[ROW_MIN : ROW_MIN + HEIGHT, COL_MIN : COL_MIN + WIDTH]
-
+        #plt.imshow(image)
         # Reflect / Crop
-        croped_images, number_crops = crop_with_padding(image, TILE_WIDTH, TILE_PADDING)
+        image_reflected, croped_images, number_crops = crop_with_padding(image, TILE_WIDTH, TILE_PADDING)
         masks = {}
         h = number_crops[0]  # horizontal
         v = number_crops[1]  # vertical
-        # Predict every part
+
+        imgs_combined = pil_images_combine(croped_images ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 10, bachground = "white" )
+        #imgs_combined.show()
+        # Predict every part      
         for i in range(0, v):
             for j in range(0, h):
                 mask = predict_img(
@@ -186,36 +182,87 @@ if __name__ == "__main__":
                 )
                 temp_mask = mask_to_image(mask, mask_values)
                 masks[h * i + j] = np.array(temp_mask)
+        
+        
+        masks_combined = pil_images_combine(masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 10 , bachground = "lightgray" )
+        #masks_combined.show()
+        # img_list =[image,image_reflected,np.array(imgs_combined),np.array(masks_combined)]
+        # all_images_combined = pil_images_combine(img_list ,imgs_combined.size[0],imgs_combined.size[1], 4, 1 , space = 10 , bachground = "black" )
+        # all_images_combined.show()
+        # all_images_combined = Image.new(mode="L",size=(masks_combined.size[0]- 200,masks_combined.size[1]), color="black")
+        # all_images_combined.paste(Image.fromarray(image),(200,300))
+        # all_images_combined.paste(Image.fromarray(image_reflected),(masks_combined.size[0]-200+50,200))
+        # all_images_combined.paste(imgs_combined,(2*masks_combined.size[0]-200+100,0))
+        # all_images_combined.paste(masks_combined,(3*masks_combined.size[0]-200+150,0))
+        # #all_images_combined.show()
+        # all_images_combined.save(SAVE_PLOTS_IMAGE_FILES_PATH[k])
+
+        # logging.info("Showing Image, Reflected Image , Image Padding, Predict Padding")
+        # fig2, ax2 = plt.subplots(1, 1,facecolor = "lightgrey", dpi = 600)        
+        # plt.style.use('grayscale')
+        # ax2.imshow(all_images_combined)
+        # plt.show()
+        new_input_image_pil = Image.new(mode="L",size= (imgs_combined.size[0],imgs_combined.size[1]), color="black")
+        new_input_image_pil.paste(Image.fromarray(img),(200,200))
+        new_image_pil = Image.new(mode="L",size= (imgs_combined.size[0],imgs_combined.size[1]), color="black")
+        new_image_pil.paste(Image.fromarray(image),(300,400))
+        new_image_reflected_pil = Image.new(mode="L",size= (imgs_combined.size[0],imgs_combined.size[1]), color="black")
+        new_image_reflected_pil.paste(Image.fromarray(image_reflected),(200,300))
+        logging.info("Showing Image, Reflected Image , Image Padding, Predict Padding")
+        plot_reflected_save(new_input_image_pil,new_image_pil,new_image_reflected_pil,imgs_combined,masks_combined,SAVE_PLOTS_IMAGE_FILES_PATH[k], show = True)   
 
         # Add together
+        img_add_h = []
+        img_add_v = []
         for i in range(0, v):
-            image_add = crop(
+            # Add horizontal
+            img_add_h = crop(
                 masks[h * i], TILE_PADDING, TILE_WIDTH, TILE_PADDING, TILE_WIDTH
             )
             for j in range(1, h):
                 img_crop = crop(
                     masks[h * i + j], TILE_PADDING, TILE_WIDTH, TILE_PADDING, TILE_WIDTH
                 )
-                image_add = np.concatenate((image_add, img_crop), axis=1)
+                img_add_h = np.concatenate((img_add_h, img_crop), axis=1)
+            # Add vertical
             if i == 0:
-                new_image = image_add
+                img_add_v = img_add_h
             else:
-                new_image = np.concatenate((new_image, image_add), axis=0)
+                img_add_v = np.concatenate((img_add_v, img_add_h), axis=0)
 
+        predicted_mask = img_add_v[0 : HEIGHT, 0 : WIDTH]
         ###
-        result = Image.fromarray(new_image)
+        result = Image.fromarray(predicted_mask)
+        ## Edges of Segment in predicted mask.
+        mask_edges = result.filter(ImageFilter.FIND_EDGES)
+        mask_edges = mask_edges.filter(ImageFilter.MaxFilter)
+        print(image.shape)
+        background = Image.fromarray(image)
+        
+        output_rgb = image[..., None].repeat(3, axis=-1)
+        mask_array = np.array(mask_edges)
+        for i in range(3):
+            val = 255 if i == 0 else 0
+            output_rgb[..., i] = np.where(mask_array > 0, val, 0)
+        
+        
+        plt.imshow(output_rgb)
 
+
+        #mask_edges.paste(background, (0, 0), background)
+
+        # pixels = list(result.getdata())
+        # result.show()
         if not args.no_save:
             out_filename = out_files[k]
-
             result.save(out_filename)
-            logging.info(f"Mask saved to {Path(out_filename).name}")
+            logging.info(f" {Path(out_filename).name}  Mask saved to -> {Path(out_filename)}  ")
 
         if args.viz:
             logging.info(
-                f"Visualizing results for image {Path(filename).name}, close to continue..."
+                f"Visualizing results for image -> {Path(filename).name}, close to continue..."
             )
-            plot_img_and_mask(image, result)
+            plot_img_and_mask(image, predicted_mask)
 
         #####################################################################################
         logging.info("Croping without padding")
@@ -240,26 +287,61 @@ if __name__ == "__main__":
                 masks2[h2 * i + j] = np.array(temp_mask2)
 
         # Add together
+        img_add_h_2 = []
+        img_add_v_2 = []
         for i in range(0, v2):
-            image_add2 = masks2[h2 * i]
+            # Add horizontal
+            img_add_h_2 = masks2[h2 * i]
             for j in range(1, h2):
-                img_crop2 = masks2[h2 * i + j]
-                image_add2 = np.concatenate((image_add2, img_crop2), axis=1)
+                imgs_crop_2 = masks2[h2 * i + j]
+                img_add_h_2 = np.concatenate((img_add_h_2, imgs_crop_2), axis=1)
+            # Add vertical
             if i == 0:
-                new_image2 = image_add2
+                img_add_v_2 = img_add_h_2
             else:
-                new_image2 = np.concatenate((new_image2, image_add2), axis=0)
+                img_add_v_2 = np.concatenate((img_add_v_2, img_add_h_2), axis=0)
 
+        predicted_mask_no_padding = img_add_v_2
         ###
-        result2 = Image.fromarray(crop(new_image2, 0, HEIGHT, 0, WIDTH))
-
+        result2 = Image.fromarray(crop(predicted_mask_no_padding, 0, HEIGHT, 0, WIDTH))
+        
         if True:
             logging.info(
-                f"Image and Masks plots saved to {SAVE_PLOTS_FILES_PATH[k]}"
+                f" {Path(SAVE_PLOTS_PREDICT_FILES_PATH[k]).name} Image and Masks plots saved to -> {Path(SAVE_PLOTS_PREDICT_FILES_PATH[k])} "
             )
-            logging.info(f'Visualizing Masks for image "{Path(filename).name}"')
+            logging.info(f'Visualizing Masks for image -> {Path(filename).name}')
             # plot_img_and_mask(image, result)
-            plot_img_and_mask_save_3(image, result, result2, SAVE_PLOTS_FILES_PATH[k])
+            mask_img = crop(
+                np.array(Image.open(IMGS_MASK_FILES_PATH[k])),
+                ROW_MIN,
+                HEIGHT,
+                COL_MIN,
+                WIDTH,
+            )
+            predicted_mask_no_padding = crop(
+                predicted_mask_no_padding, 0, HEIGHT, 0, WIDTH
+            )
+
+
+            if  (images_not_trained):
+                plot_img_imgmsk_predicts_save(
+                    image,
+                    output_rgb,
+                    predicted_mask,
+                    predicted_mask_no_padding,
+                    SAVE_PLOTS_PREDICT_FILES_PATH[k], 
+                    show = True
+                )                
+            else:
+                plot_img_imgmsk_mask_predicts_save(
+                    image,
+                    output_rgb,
+                    mask_img,
+                    predicted_mask,
+                    predicted_mask_no_padding,
+                    SAVE_PLOTS_PREDICT_FILES_PATH[k], 
+                    show = False
+                )
 
 
 # %%

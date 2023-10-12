@@ -32,3 +32,4 @@ python C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\predict.py 
 python C:\Users\vmanukyan\Documents\dev\thesis\nets\Nets\Unet\github\predict.py --viz
 
 
+######### bd9d82b1fec4714a2a9f4cb1217e7a608dfa9787  ApI

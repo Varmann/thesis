@@ -54,7 +54,7 @@ def train_model(
         batch_size=batch_size, num_workers=os.cpu_count(), pin_memory=True
     )
     train_loader = DataLoader(train_set, shuffle=True, **loader_args)
-    val_loader = DataLoader(val_set, shuffle=False, drop_last=True, **loader_args)
+    val_loader = DataLoader(val_set, shuffle=False, drop_last=False, **loader_args)
 
     # (Initialize logging)
     experiment = wandb.init(project="U-Net", resume="allow", anonymous="must")
@@ -124,6 +124,8 @@ def train_model(
                     device.type if device.type != "mps" else "cpu", enabled=amp
                 ):
                     masks_pred = model(images)
+                    # print(masks_pred.shape)
+                    # print(masks_pred.min(),masks_pred.max(),masks_pred.mean())
                     if model.n_classes == 1:
                         loss = criterion(masks_pred.squeeze(1), true_masks.float())
                         loss += dice_loss(
@@ -156,7 +158,8 @@ def train_model(
                 pbar.set_postfix(**{"loss (batch)": loss.item()})
 
                 #TODO: Evaluation round
-                division_step = n_train // (5 * batch_size)
+                #division_step = n_train // (5 * batch_size)
+                division_step = n_train // batch_size
                 if division_step > 0:
                     if global_step % division_step == 0:
                         histograms = {}
@@ -203,11 +206,11 @@ def train_model(
             #Path(DIR_CHECKPOINTS).mkdir(parents=True, exist_ok=True)
             state_dict = model.state_dict()
             state_dict["mask_values"] = dataset.mask_values
-            # torch.save(
-            #     state_dict, str(DIR_CHECKPOINTS / f"checkpoint_epoch{epoch}.pth")
-            # )
+            torch.save(
+                 state_dict, str(DIR_CHECKPOINTS / f"checkpoint_epoch{epoch}.pth")
+            )
             # Every time saves the as last checkpoint.
-            torch.save(state_dict, MODEL_CHECKPOINT)
+            #torch.save(state_dict, MODEL_CHECKPOINT)
             logging.info(f"Checkpoint {epoch} saved!")
 
 
@@ -274,8 +277,8 @@ def get_args():
     (args, unknown) = parser.parse_known_args()
 
     # load from specific checkpoint
-    args.load = MODEL_CHECKPOINT
-    print(args)
+    if TRAIN_LOAD_LAST_MODEL:
+        args.load = MODEL_CHECKPOINT    
     return (args, unknown)
 
 
@@ -311,6 +314,7 @@ if __name__ == "__main__":
     model = model.to(memory_format=torch.channels_last)
 
     logging.info(
+        f"Args -> {(args)}\n"
         f"Network:\n"
         f"\t{model.n_channels} input channels\n"
         f"\t{model.n_classes} output channels (classes)\n"
@@ -351,7 +355,7 @@ if __name__ == "__main__":
             learning_rate=args.lr,
             device=device,
             img_scale=args.scale,
-            val_percent=args.val / 100,
+            val_percent=args.val,
             amp=args.amp,
         )
 

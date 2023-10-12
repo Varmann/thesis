@@ -11,7 +11,7 @@ from os.path import splitext, isfile, join
 from pathlib import Path
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from utils.utils import plot_img_and_mask , random_crop_rotate90
+from utils.utils import *
 
 from defaults import *
 
@@ -99,44 +99,53 @@ class BasicDataset(Dataset):
 
     def __getitem__(self, idx):
         name = self.ids[idx]
-        mask_file = list(self.mask_dir.glob(name + self.mask_suffix + '.*'))
-        img_file = list(self.images_dir.glob(name + '.*'))
+        mask_files = list(self.mask_dir.glob(name + self.mask_suffix + '.*'))
+        img_files = list(self.images_dir.glob(name + '.*'))
 
-        assert len(img_file) == 1, f'Either no image or multiple images found for the ID {name}: {img_file}'
-        assert len(mask_file) == 1, f'Either no mask or multiple masks found for the ID {name}: {mask_file}'
-        mask = load_image(mask_file[0])
-        img = load_image(img_file[0])
+        assert len(img_files) == 1, f'Either no image or multiple images found for the ID {name}: {img_files}'
+        assert len(mask_files) == 1, f'Either no mask or multiple masks found for the ID {name}: {mask_files}'
+        mask = load_image(mask_files[0])
+        image = load_image(img_files[0])
 
-        assert img.size == mask.size, \
-            f'Image and mask {name} should be the same size, but are {img.size} and {mask.size}'
+        assert image.size == mask.size, \
+            f'Image and mask {name} should be the same size, but are {image.size} and {mask.size}'
+        
 
-        img = self.preprocess(self.mask_values, img, self.scale, is_mask=False)
-        mask = self.preprocess(self.mask_values, mask, self.scale, is_mask=True)
-
-        # TODO Random Crop 300x300 oder andere Augmentation(Spiegeln, 90Grad drehen).
-        # Jedes Bild nur einmal, stattdessen sehr viele epochs.
-       
+         # TODO Random Crop 300x300 oder andere Augmentation(Spiegeln, 90Grad drehen).
+        # Jedes Bild nur einmal, stattdessen sehr viele epochs.       
         # Row max for Random Row         
         Row_max  = ROW_MIN + HEIGHT - CROP_SIZE
         #Column max for Random Column 
         Column_max  = COL_MIN + WIDTH - CROP_SIZE 
-       
-        # For the crop array must be two dimensional . Hier  the image has the shape of [1,1980,1080]
-        image  = img[0, :,:]
-        croped_image, croped_mask =  random_crop_rotate90(image, mask, CROP_SIZE, ROW_MIN, Row_max, COL_MIN ,Column_max)    
-        
-        ## Hier the image has to be of the shape of [1,300,300]
-        croped_image = croped_image[None , : ]
 
-        
+        croped_image, croped_mask = pil_imgs_random_crop_rotate90_flip(image, mask, CROP_SIZE, ROW_MIN, Row_max, COL_MIN ,Column_max) 
+
+        image = self.preprocess(self.mask_values, croped_image, self.scale, is_mask=False)
+        mask = self.preprocess(self.mask_values, croped_mask, self.scale, is_mask=True)   
+
+        # fig, ax = plt.subplots(1, 4,facecolor = "lightgrey", dpi = 200)
+        # [ax_i.set_axis_off() for ax_i in ax.ravel()]   
+        # plt.style.use('grayscale')
+        # ### 
+        # ax[0].set_title('Croped Image')
+        # ax[0].imshow(np.array(croped_image))
+        # ###
+        # ax[1].set_title('Croped Mask')
+        # ax[1].imshow(np.array(croped_mask)) 
+        # ###
+        # ax[2].set_title('Preprocess')
+        # ax[2].imshow((np.array(image))[0,:,:])
+        # ###
+        # ax[3].set_title('Preprocess')
+        # ax[3].imshow(np.array(mask), vmin=0, vmax=1)
+        # ###    
+        # plt.show()
+        # print("done plot")
+
         return {
-            'image': torch.as_tensor(croped_image.copy()).float().contiguous(),
-            'mask': torch.as_tensor(croped_mask.copy()).long().contiguous()
-        }
-        # return {
-        #         'image': torch.as_tensor(img.copy()).float().contiguous(),
-        #         'mask': torch.as_tensor(mask.copy()).long().contiguous()
-        #     }
+                'image': torch.as_tensor(image.copy()).float().contiguous(),
+                'mask': torch.as_tensor(mask.copy()).long().contiguous()
+            }
 
 
 class CarvanaDataset(BasicDataset):
