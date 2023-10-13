@@ -29,11 +29,19 @@ CROP_SIZE = TILE_WIDTH + 2 * TILE_PADDING
 # Input Image and Input Mask Region of Interest 
 # Region of the air bubbles.
 # Row
-ROW_MIN = 200
-HEIGHT = 1250
+ROW_MIN = 50
+HEIGHT = 1250+150
 #Column
 COL_MIN = 60
 WIDTH = 620
+
+# ROW_MIN = 0
+# HEIGHT = 1500
+# #Column
+# COL_MIN = 0
+# WIDTH = 750
+
+
 
 # ROW_MIN = 350
 # HEIGHT = 1400

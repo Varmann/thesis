@@ -304,7 +304,6 @@ def pil_imgs_random_crop_rotate90_flip(pil_image: Image, pil_mask: Image,crop_si
 
     img_rotate = croped_image.rotate(angle)
     msk_rotate = croped_mask.rotate(angle)
-
     
     j_Random = random.randint(0 , 2)   
     if(j_Random == 0):
