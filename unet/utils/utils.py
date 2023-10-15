@@ -151,7 +151,7 @@ def crop_without_padding(image_np_array: np.ndarray, Tile_Width :int):
 
     # Reflect
     if(image_np_array.ndim == 2) :
-         image_reflected = np.pad(image_np_array, ((up, down),(left, right)), mode='reflect')
+        image_reflected = np.pad(image_np_array, ((up, down),(left, right)), mode='reflect')
     # 3rd Dimension is the Gray/RGB values, do not reflect.
     elif(image_np_array.ndim == 3) :
         image_reflected = np.pad(image_np_array, ((up, down),(left , right),(0,0)), mode='reflect')    
@@ -175,7 +175,7 @@ def crop_without_padding(image_np_array: np.ndarray, Tile_Width :int):
             image_teil = image_reflected[y:y+Crop_width, x:x+Crop_width]
             croped_images.append( image_teil ) 
     # Return Array of Croped Images
-    return croped_images , number_crops
+    return image_reflected, croped_images , number_crops
 
 
 
@@ -289,7 +289,7 @@ def plot_images(
     index_Input_Image: int,
     input_image:np.ndarray,
     image_roi:np.ndarray,
-    image_reflected:np.ndarray,    
+    image_reflected_padding:np.ndarray,    
     croped_images_padding:np.ndarray,
     predicted_masks:np.ndarray,
     predicted_mask:np.ndarray,
@@ -297,16 +297,25 @@ def plot_images(
     img_roi_mask:Image,
     img_roi_mask_edge:Image,
     mask_edges:np.ndarray,
+    image_reflected_no_padd:np.ndarray,    
     predicted_mask_no_padding:np.ndarray,
-    h:int,
-    v:int,
+    number_crops_padding:[int,int],
+    number_crops_no_padd:[int,int],
+    reflect_color:str,
+    reflect_linestyle:str,
+    facecolor_plot:str,
     backcolor:str,
     padding_color:str,
+    padd_linestyle_1:str,
+    padd_linestyle_2:str,
+    combine_space:int,
     TILE_WIDTH_color:str,
+    TILE_WIDTH_linestyle:str, 
     titelcolor:str,
     titelfontsize:int,
     titelfontname:str,
     bounding_box_color:str,
+    bounding_box = False,
     show = True,
     save = True,
 ):
@@ -317,87 +326,116 @@ def plot_images(
         # titelfontsize = 7
         # titelfontname = "cursive"
         # bounding_box_color = "blue"
-        fig, ax = plt.subplots(2, 6,figsize = (8,4), facecolor = backcolor, dpi = 600)
-        #[ax_i.set_axis_off() for ax_i in ax.ravel()]     
-        [ax_i.set_xticks([])  for ax_i in ax.ravel()]  
-        [ax_i.set_yticks([])  for ax_i in ax.ravel()]  
-        #[ax_i.spines["left"].set_visible(True)  for ax_i in ax.ravel()]  
-        [ax_i.spines["left"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
-        [ax_i.spines["top"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
-        [ax_i.spines["right"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
-        [ax_i.spines["bottom"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
-
+        fig, ax = plt.subplots(2, 6,figsize = (8,4), facecolor = facecolor_plot, dpi = 600)
+        if(bounding_box):           
+            [ax_i.set_xticks([])  for ax_i in ax.ravel()]  
+            [ax_i.set_yticks([])  for ax_i in ax.ravel()]  
+            #[ax_i.spines["left"].set_visible(True)  for ax_i in ax.ravel()]  
+            [ax_i.spines["left"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+            [ax_i.spines["top"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+            [ax_i.spines["right"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+            [ax_i.spines["bottom"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+        else:
+            [ax_i.set_axis_off() for ax_i in ax.ravel()]  
         ### 1
         ax[0][0].set_title('Image',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[0][0].imshow(Image.fromarray(image_roi).convert("RGB"))
         ###
-        ax[0][1].set_title('Reflect', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)    
-        line_width = 0.3       
-        x = [50,50,(50+image_roi.shape[1]),(50+image_roi.shape[1]),50]
-        y = [50,(50+image_roi.shape[0]),(50+image_roi.shape[0]),50,50]
-        ax[0][1].plot(x,y, color= "red",linestyle = "solid", linewidth = line_width)
-        ax[0][1].imshow(Image.fromarray(image_reflected).convert("RGB"))      
+        ax[0][1].set_title('Reflect', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)             
+        x = [TILE_PADDING,TILE_PADDING,(TILE_PADDING+image_roi.shape[1]),(TILE_PADDING+image_roi.shape[1]),TILE_PADDING]
+        y = [TILE_PADDING,(TILE_PADDING+image_roi.shape[0]),(TILE_PADDING+image_roi.shape[0]),TILE_PADDING,TILE_PADDING]
+        ax[0][1].plot(x,y, color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3)
+        ax[0][1].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))      
 
-        ax[0][2].set_title('1. Reflect+Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)  
-        ax[0][3].set_title('2. Reflect+Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)               
+        ax[0][2].set_title('1. Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)  
+        ax[0][3].set_title('2. Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)               
         # Draw/Plot Padding Rectagles on Reflected Image.
+        h_padding = number_crops_padding[0]  # horizontal
+        v_padding = number_crops_padding[1]  # vertical
         for k in range (0,3):   
-            for i in range (0,v):   
-                for j in range (0,h):
+            for i in range (0,v_padding):   
+                for j in range (0,h_padding):
                     # Crop image
-                    line_width = 5                            
+                    line_width = 2                            
                     space_x = line_width
                     space_y = line_width
                     if (i==0):
                         space_x = line_width if(j==0) else 0
-                    if (j== (h-1)):
+                    if (j== (h_padding-1)):
                         space_x = -line_width
-                    if (i== (v-1)):
-                        space_y= -line_width                   
+                    if (i== (v_padding-1)):
+                        space_y= -line_width 
                     
-                    
-                    if k==0:    
+                    if k==0:   
                         # Rectangle 200x200
-                        x1 = 50+j*TILE_WIDTH
-                        y1 = 50+i*TILE_WIDTH                         
-                        width = TILE_WIDTH
-                        x = [x1,x1,x1+width,x1+width,x1]
-                        y = [y1,y1+width,y1+width,y1,y1]
-                        # 1. Reflect+Padding
-                        ax[0][2].plot(x, y, color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.5)
-                        # 2. Reflect+Padding
-                        ax[0][3].plot(x, y, color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.5)
-                        # Predicted Mask + Padding
-                        ax[1][0].plot(list(np.asarray(x) -50), list(np.asarray(y) -50), color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.3)
+                        x1 = TILE_PADDING+j*TILE_WIDTH 
+                        y1 = TILE_PADDING+i*TILE_WIDTH  
+                        if(i==0): 
+                            x = [x1,x1,x1+TILE_WIDTH,x1+TILE_WIDTH,x1]
+                            y = [y1,y1+TILE_WIDTH,y1+TILE_WIDTH,y1,y1]
+                            ax[0][2].plot(x, y, color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
+                            ax[0][3].plot(x, y, color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
+                        else:
+                            if(j==0): 
+                                ax[0][2].plot([x1,x1],[y1,y1+TILE_WIDTH], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                                ax[0][2].plot([x1,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1+TILE_WIDTH], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                                ax[0][2].plot([x1+TILE_WIDTH,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                            
+                                ax[0][3].plot([x1,x1],[y1,y1+TILE_WIDTH], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                                ax[0][3].plot([x1,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1+TILE_WIDTH], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                                ax[0][3].plot([x1+TILE_WIDTH,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                            else:
+                                ax[0][2].plot([x1,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1+TILE_WIDTH], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                                ax[0][2].plot([x1+TILE_WIDTH,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
+                                
+                                ax[0][3].plot([x1,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1+TILE_WIDTH], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                                ax[0][3].plot([x1+TILE_WIDTH,x1+TILE_WIDTH],[y1+TILE_WIDTH,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
+          
+                        # Rectangle 200x200
+                        x1 = TILE_PADDING+j*CROP_SIZE + (j+1)*combine_space
+                        y1 = TILE_PADDING+i*CROP_SIZE + (i+1)*combine_space
+                        x = [x1,x1,x1+TILE_WIDTH,x1+TILE_WIDTH,x1]
+                        y = [y1,y1+TILE_WIDTH,y1+TILE_WIDTH,y1,y1]
+
+                        # Predicted Masks Combined + TILE_WIDTH Rectangles
+                        ax[0][5].plot(x,y, color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.3)                    
+                        
+                        
+                        # Rectangle 200x200
+                        x1 = TILE_PADDING+j*TILE_WIDTH
+                        y1 = TILE_PADDING+i*TILE_WIDTH
+                        x = [x1,x1,x1+TILE_WIDTH,x1+TILE_WIDTH,x1]
+                        y = [y1,y1+TILE_WIDTH,y1+TILE_WIDTH,y1,y1]
+
+                        ## Predicted Mask + Padding
+                        ax[1][0].plot(list(np.asarray(x) -TILE_PADDING), list(np.asarray(y) -TILE_PADDING), color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.3)
                     else:  
                         # Rectangle 300x300                              
                         x1 = j*TILE_WIDTH + space_x
-                        y1 = i*TILE_WIDTH  + space_y                       
-
-                        width = TILE_WIDTH+2*TILE_PADDING
-                        x = [x1,x1,x1+width,x1+width,x1]
-                        y = [y1,y1+width,y1+width,y1,y1]
+                        y1 = i*TILE_WIDTH  + space_y  
+                        x = [x1,x1,x1+CROP_SIZE,x1+CROP_SIZE,x1]
+                        y = [y1,y1+CROP_SIZE,y1+CROP_SIZE,y1,y1]
 
                     if k==1:                                
                         if ((j+1)%2==0) and ((i+1)%2==0):
-                            ax[0][2].plot(x, y, color= "red",linestyle = "dashed", linewidth = 0.5)
+                            ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
                         if ((j+1)%2==1) and ((i+1)%2==0):
-                            ax[0][3].plot(x, y, color= "red",linestyle = "dashed", linewidth = 0.5)    
+                            ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)    
                     elif k==2:
                         if ((j+1)%2==1) and ((i+1)%2==1):
-                            ax[0][2].plot(x, y, color= padding_color ,linestyle = "solid", linewidth = 1)
+                            ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
                         if ((j+1)%2==0) and ((i+1)%2==1):
-                            ax[0][3].plot(x, y, color= padding_color ,linestyle = "solid", linewidth = 1)
+                            ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
 
-        ax[0][2].imshow(Image.fromarray(image_reflected).convert("RGB"))
-        ax[0][3].imshow(Image.fromarray(image_reflected).convert("RGB"))
+        ax[0][2].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))
+        ax[0][3].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))
         # ###
-        ax[0][4].set_title('Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
-        croped_imgs_combined = pil_images_combine(croped_images_padding ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 20, bachground = padding_color )
-        ax[0][4].imshow(croped_imgs_combined.convert("RGB"))
+        ax[0][4].set_title('Crop with Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        croped_images_padding_combined = pil_images_combine(croped_images_padding ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h_padding, v_padding , space = combine_space, bachground = padding_color )
+        ax[0][4].imshow(croped_images_padding_combined.convert("RGB"))
         ###
-        ax[0][5].set_title('Predict with padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)                
-        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 20 , bachground = padding_color )        
+        ax[0][5].set_title('Predict with Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)                
+        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h_padding, v_padding , space = combine_space , bachground = backcolor )        
         ax[0][5].imshow(predicted_masks_combined.convert("RGB"))
         ### 2
         ax[1][0].set_title('Predicted Mask',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
@@ -406,37 +444,59 @@ def plot_images(
         ax[1][1].set_title('Mask', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[1][1].imshow(result_mask.convert("RGB"))
         ###
-        ax[1][2].set_title('ROI + Mask',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][2].set_title('Image + Mask',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[1][2].imshow(img_roi_mask.convert("RGB"))
         ###
-        ax[1][3].set_title('ROI + Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][3].set_title('Image + Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[1][3].imshow(Image.fromarray(img_roi_mask_edge).convert("RGB"))
         ###
-        ax[1][4].set_title('Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
-        ax[1][4].imshow(mask_edges.convert("RGB"))
+        ax[1][4].set_title('Crop without Padding',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)     
+        ax[1][4].plot(  [0,image_roi.shape[1],image_roi.shape[1]],[image_roi.shape[0],image_roi.shape[0],0]  , color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3) 
+        # Draw/Plot Padding Rectagles on Reflected Image.
+        h_no_padd = number_crops_no_padd[0]  # horizontal
+        v_no_padd  = number_crops_no_padd[1]  # vertical   
+        for i in range (0,v_no_padd ):   
+            for j in range (0,h_no_padd ):
+                # Rectangle 300x300  
+                x1 = j*CROP_SIZE
+                y1 = i*CROP_SIZE
+                if(i==0): 
+                    x = [x1,x1,x1+CROP_SIZE,x1+CROP_SIZE,x1]
+                    y = [y1,y1+CROP_SIZE,y1+CROP_SIZE,y1,y1]
+                    ax[1][4].plot(x, y, color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
+                else:
+                    if(j==0): 
+                        ax[1][4].plot([x1,x1],[y1,y1+CROP_SIZE], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                        ax[1][4].plot([x1,x1+CROP_SIZE],[y1+CROP_SIZE,y1+CROP_SIZE], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                        ax[1][4].plot([x1+CROP_SIZE,x1+CROP_SIZE],[y1+CROP_SIZE,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                    else:
+                        ax[1][4].plot([x1,x1+CROP_SIZE],[y1+CROP_SIZE,y1+CROP_SIZE], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
+                        ax[1][4].plot([x1+CROP_SIZE,x1+CROP_SIZE],[y1+CROP_SIZE,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
+          
+        ax[1][4].imshow(Image.fromarray(image_reflected_no_padd).convert("RGB"))
+        # ax[1][4].set_title('Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)        
+        # ax[1][4].imshow(mask_edges.convert("RGB"))
         ###
-        ax[1][5].set_title('NoPadding',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][5].set_title('Predict without padding',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[1][5].imshow(Image.fromarray(predicted_mask_no_padding).convert("RGB"))
         ###
         if(save):
-            plt.savefig(SAVE_PLOTS_FILES_PATH[index_Input_Image],facecolor=backcolor,bbox_inches='tight')  
+            plt.savefig(SAVE_PLOTS_FILES_PATH[index_Input_Image],facecolor=facecolor_plot,bbox_inches='tight')  
             plt.close()
         if(show):  
             if(save):
                 saved_plot_image = Image.open(SAVE_PLOTS_FILES_PATH[index_Input_Image]).convert("RGB")  
-                saved_plot_image.show()  
+                saved_plot_image.show() 
+                #saved_plot_image.close() 
             else:
                 img_buf = io.BytesIO() 
-                plt.savefig(img_buf, format='png',facecolor=backcolor,bbox_inches='tight')                  
+                plt.savefig(img_buf, format='png',facecolor=facecolor_plot,bbox_inches='tight')                  
                 pil_image_from_buffer = Image.open(img_buf).convert("RGB")
                 pil_image_from_buffer.show()
+                #pil_image_from_buffer.close() 
                 pil_image_from_buffer.save(SAVE_PLOTS_FILES_PATH[k])
                 img_buf.close()
                      
 
-        
-        # plt.close()
-        # saved_plot_image = Image.open(SAVE_PLOTS_FILES_PATH[index_Input_Image]).convert("RGB")               
-        # saved_plot_image.show()
 
           

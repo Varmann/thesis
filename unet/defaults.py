@@ -22,9 +22,11 @@ MODEL_CHECKPOINT = Path(__file__).parent.resolve() / "checkpoints" / "checkpoint
 TRAIN_LOAD_LAST_MODEL = False
 
 ### Padding and Crop Parameter
-TILE_WIDTH = 200
-TILE_PADDING = 50
-CROP_SIZE = TILE_WIDTH + 2 * TILE_PADDING
+## CROP_SIZE corresponds to CNN input layer Parameter . Don't change this parameter.
+CROP_SIZE = 300
+# TILE_PADDING can be changed. Default is 50.
+TILE_PADDING = 30
+TILE_WIDTH = CROP_SIZE - 2*TILE_PADDING
 
 # Input Image: Height = 1500, Widht = 750
 ###############################################
