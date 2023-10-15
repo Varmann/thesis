@@ -153,9 +153,9 @@ if __name__ == "__main__":
 
     logging.info("Model loaded!")
 
-    for k, filename in enumerate(in_files):
-        logging.info(f'Predicting image -> {Path(filename).name} ...')
-        input_image = np.array(Image.open(filename).convert("L"))
+    for index_Input_Image, filename_Input_Image in enumerate(in_files):
+        logging.info(f'Predicting image -> {Path(filename_Input_Image).name} ...')
+        input_image = np.array(Image.open(filename_Input_Image).convert("L"))
 
         #####################################################################################
         logging.info("Croping with padding")
@@ -184,7 +184,7 @@ if __name__ == "__main__":
                 predicted_masks[h * i + j] = np.array(temp_mask1)
         
         
-        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 10 , bachground = "red" )
+        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 10 , bachground = "lightgray" )
         #masks_combined.show()
 
         # Add together
@@ -227,42 +227,39 @@ if __name__ == "__main__":
             if i==1:
                 val = 0
             #val = 255 if i == 0 else 0
-            output_rgb_1[..., i] = np.where(mask_array > 0, val, 200)
+            output_rgb_1[..., i] = np.where(mask_array > 0, val, 0)
         
         
         background = Image.fromarray(image_roi)
         foreground = Image.fromarray(output_rgb_1)
         foreground.paste(background, (0, 0), background)      
 
-        img_rgb_1 = foreground.copy()
-        
+        img_roi_mask = foreground.copy()
+        img_roi_mask.convert("RGB").save(SAVE_ROI_MASK_FILES_PATH[index_Input_Image])
+        logging.info(f"{Path(SAVE_ROI_MASK_FILES_PATH[index_Input_Image]).name}  Image and Predicted Mask saved to -> {Path(SAVE_ROI_MASK_FILES_PATH[index_Input_Image])}  ")
+
        
-        output_rgb_2 = image_roi[..., None].repeat(3, axis=-1)
+        img_roi_mask_edge = image_roi[..., None].repeat(3, axis=-1)
         mask_edges_2 = result_mask.filter(ImageFilter.FIND_EDGES)
         mask_edges_2 = mask_edges_2.filter(ImageFilter.MaxFilter)
         mask_array = np.array(mask_edges_2)
 
         for i in range(3):
-            #Red
-            if i==0:
-                val = 255
-            #Green
-            if i==1:
-                val = 0
-            #Blue
-            if i==1:
-                val = 0
-            #val = 255 if i == 0 else 0
-            output_rgb_2[..., i] = np.where(mask_array > 0, val, output_rgb_2[..., i])
+            val = 255 if i == 0 else 0
+            img_roi_mask_edge[..., i] = np.where(mask_array > 0, val, img_roi_mask_edge[..., i])
+        
+
+        Image.fromarray(img_roi_mask_edge).convert("RGB").save(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image])
+        logging.info(f"{Path(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image]).name}  Image and Predicted Mask Edge saved to -> {Path(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image])}  ")
 
         if not args.no_save:
-            out_filename = out_files[k]
+            out_filename = out_files[index_Input_Image]
             result_mask.save(out_filename)
             logging.info(f" {Path(out_filename).name}  Mask saved to -> {Path(out_filename)}  ")
 
         if args.viz:
             logging.info(
-                f"Visualizing results for image -> {Path(filename).name}, close to continue..."
+                f"Visualizing results for image -> {Path(filename_Input_Image).name}, close to continue..."
             )
             plot_img_and_mask(image_roi, predicted_mask)
 
@@ -307,18 +304,19 @@ if __name__ == "__main__":
         
         if True:
             logging.info(
-                f" {Path(SAVE_PLOTS_PREDICT_FILES_PATH[k]).name} Image and Masks plots saved to -> {Path(SAVE_PLOTS_PREDICT_FILES_PATH[k])} "
+                f"{Path(SAVE_PLOTS_FILES_PATH[index_Input_Image]).name} Image and Masks plots saved to -> {Path(SAVE_PLOTS_FILES_PATH[index_Input_Image])} "
             )
-            logging.info(f'Visualizing Masks for image -> {Path(filename).name}')
+            logging.info(f'Visualizing Masks for image -> {Path(filename_Input_Image).name}')
             
             
-            if  (images_not_trained):            
+            if  (True):            
    
-                backcolor = "lightblue"
-                titelfontsize = 8
+                backcolor = "blue"
+                titelfontsize = 6
                 titelfontname = 'Arial'
                 fig, ax = plt.subplots(2, 6,figsize = (8,4), facecolor = backcolor, dpi = 600)
                 [ax_i.set_axis_off() for ax_i in ax.ravel()]                   
+                #fig.tight_layout()                
                 #plt.style.use('grayscale')
                 ### 1
                 ax[0][0].set_title('Input',fontsize=titelfontsize, fontname = titelfontname)
@@ -327,10 +325,57 @@ if __name__ == "__main__":
                 ax[0][1].set_title('ROI', fontsize=titelfontsize, fontname = titelfontname)
                 ax[0][1].imshow(Image.fromarray(image_roi).convert("RGB")) 
                 ##
-                ax[0][2].set_title('Reflect', fontsize=titelfontsize, fontname = titelfontname)
-                ax[0][2].imshow(Image.fromarray(image_reflected).convert("RGB")) 
+                ax[0][2].set_title('Reflect', fontsize=titelfontsize, fontname = titelfontname)    
+                line_width = 0.3
+                # ax[0][2].plot([50,50],[0,image_reflected.shape[0]], color= "red",linestyle = "solid", linewidth = line_width)
+                # ax[0][2].plot([0,image_reflected.shape[1]],[50,50], color= "red",linestyle = "solid", linewidth = line_width)
+                # ax[0][2].plot([50+image_roi.shape[1],50+image_roi.shape[1]],[0,image_reflected.shape[0]], color= "red",linestyle = "solid", linewidth = line_width)
+                # ax[0][2].plot([0,image_reflected.shape[1]],[50+image_roi.shape[0],50+image_roi.shape[0]], color= "red",linestyle = "solid", linewidth = line_width)
+
+                x = [50,50,(50+image_roi.shape[1]),(50+image_roi.shape[1]),50]
+                y = [50,(50+image_roi.shape[0]),(50+image_roi.shape[0]),50,50]
+                ax[0][2].plot(x,y, color= "red",linestyle = "solid", linewidth = line_width)
+                ax[0][2].imshow(Image.fromarray(image_reflected).convert("RGB"))             
                 ##
-                ax[0][3].set_title('Reflect', fontsize=titelfontsize, fontname = titelfontname)
+                ax[0][3].set_title('Reflect+Padding', fontsize=titelfontsize, fontname = titelfontname)               
+
+                for k in range (0,3):   
+                    for i in range (0,v):   
+                        for j in range (0,h):
+                            # Crop image
+                            line_width = 2                            
+                            space_x = line_width
+                            space_y = line_width
+                            if (i==0):
+                                space_x = line_width if(j==0) else 0
+                            if (j== (h-1)):
+                                space_x = -line_width
+                            if (i== (v-1)):
+                                space_y= -line_width
+                            
+
+                            if k==0:    
+                                x1 = 50+j*TILE_WIDTH
+                                y1 = 50+i*TILE_WIDTH                         
+                                width = TILE_WIDTH
+                                x = [x1,x1,x1+width,x1+width,x1]
+                                y = [y1,y1+width,y1+width,y1,y1]
+                                ax[0][3].plot(x, y, color= "blue",linestyle = "solid", linewidth = 1)
+                            else:                                
+                                x1 = j*TILE_WIDTH + space_x
+                                y1 = i*TILE_WIDTH  + space_y                       
+
+                                width = TILE_WIDTH+2*TILE_PADDING
+                                x = [x1,x1,x1+width,x1+width,x1]
+                                y = [y1,y1+width,y1+width,y1,y1]
+
+                            if k==1:                                
+                                if ((j+1)%2==0) and ((i+1)%2==0):
+                                    ax[0][3].plot(x, y, color= "red",linestyle = "solid", linewidth = 1)
+                            elif k==2:
+                                if ((j+1)%2==1) and ((i+1)%2==1):
+                                    ax[0][3].plot(x, y, color= "yellow" ,linestyle = "solid", linewidth = 1)
+
                 ax[0][3].imshow(Image.fromarray(image_reflected).convert("RGB"))
                 # ###
                 ax[0][4].set_title('Padding', fontsize=titelfontsize, fontname = titelfontname)
@@ -339,17 +384,17 @@ if __name__ == "__main__":
                 ax[0][5].set_title('Predict', fontsize=titelfontsize, fontname = titelfontname)
                 ax[0][5].imshow(predicted_masks_combined.convert("RGB"))
                 ### 2
-                ax[1][0].set_title('Predict', fontsize=titelfontsize, fontname = titelfontname)
+                ax[1][0].set_title('Predicted Mask', fontsize=titelfontsize, fontname = titelfontname)
                 ax[1][0].imshow(Image.fromarray(predicted_mask).convert("RGB"))
                 ###
                 ax[1][1].set_title('Mask', fontsize=titelfontsize, fontname = titelfontname)
                 ax[1][1].imshow(result_mask.convert("RGB"))
                 ###
-                ax[1][2].set_title('ROI+Mask', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][2].imshow(img_rgb_1.convert("RGB"))
+                ax[1][2].set_title('ROI + Mask', fontsize=titelfontsize, fontname = titelfontname)
+                ax[1][2].imshow(img_roi_mask.convert("RGB"))
                 ###
-                ax[1][3].set_title('ROI+Edges', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][3].imshow(Image.fromarray(output_rgb_2).convert("RGB"))
+                ax[1][3].set_title('ROI + Mask Edges', fontsize=titelfontsize, fontname = titelfontname)
+                ax[1][3].imshow(Image.fromarray(img_roi_mask_edge).convert("RGB"))
                 ###
                 ax[1][4].set_title('Mask Edges', fontsize=titelfontsize, fontname = titelfontname)
                 ax[1][4].imshow(mask_edges.convert("RGB"))
@@ -357,10 +402,20 @@ if __name__ == "__main__":
                 ax[1][5].set_title('NoPadding', fontsize=titelfontsize, fontname = titelfontname)
                 ax[1][5].imshow(Image.fromarray(predicted_mask_no_padding).convert("RGB"))
                 ###
-                #fig.tight_layout()
-                plt.savefig(SAVE_PLOTS_PREDICT_FILES_PATH[k],facecolor=backcolor,bbox_inches='tight')    
+                plt.savefig(SAVE_PLOTS_FILES_PATH[index_Input_Image],facecolor=backcolor,bbox_inches='tight')  
                 plt.show()
+                
+                # img_buf = io.BytesIO()
+                # plt.savefig(img_buf, format='png',facecolor=backcolor,bbox_inches='tight')
+                # im = Image.open(img_buf).convert("RGB")
+                # #im.show()
+                # im.save(SAVE_PLOTS_FILES_PATH[k])
+                # img_buf.close()
 
+                # plt.show()
+                # #plt.pause(5)
+                # plt.close()
+          
 
             else:
                 mask_img = crop(np.array(Image.open(IMGS_MASK_FILES_PATH[k])),ROW_MIN,HEIGHT,COL_MIN,WIDTH)
