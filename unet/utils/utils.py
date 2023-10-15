@@ -2,103 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 from PIL import Image
+from defaults import *
 
-# def plot_img_and_mask(img, mask):    
-#     classes = mask.max() + 1
-#     fig, ax = plt.subplots(1, classes + 1)
-#     plt.style.use('grayscale')
-#     ax[0].set_title('Input image')
-#     ax[0].imshow(img)
-#     for i in range(classes):
-#         ax[i + 1].set_title(f'Mask (class {i + 1})')
-#         ax[i + 1].imshow(mask == i)
-#     plt.xticks([]), plt.yticks([])   
-#     plt.show()
-
-
-def plot_img_and_mask(img, mask):
-    fig, ax = plt.subplots(1, 2 ,facecolor = "lightgrey")
-    [ax_i.set_axis_off() for ax_i in ax.ravel()]
-    plt.style.use('grayscale')        
-    ax[0].set_title('Input image')
-    ax[0].imshow(img)
-    ax[1].set_title('Mask') 
-    ax[1].imshow(mask,vmin=0, vmax=1)
-    plt.show()
-
-
-def plot_img_imgmsk_mask_predicts_save(img, imgmsk,mask , predict,  predict_no_padding, filename, show = False):   
-    fig, ax = plt.subplots(1, 5,facecolor = "lightgrey", dpi = 600)
-    [ax_i.set_axis_off() for ax_i in ax.ravel()]   
-    plt.style.use('grayscale')
-    ### 
-    ax[0].set_title('Image')
-    ax[0].imshow(img,vmin=0, vmax=255)
-    ###
-    ax[1].set_title('Mask')
-    ax[1].imshow(mask, vmin=0, vmax=1) 
-    ##
-    ax[2].set_title('Image+Predict')
-    ax[2].imshow(imgmsk,vmin=0, vmax=255)    
-    ###
-    ax[3].set_title('Predict')
-    #ax[3].imshow(predict)
-    ax[3].imshow(predict, vmin=0, vmax=1)
-    ###
-    ax[4].set_title('No Padding')
-    #ax[3].imshow(predict_no_padding)
-    ax[4].imshow(predict_no_padding, vmin=0, vmax=1)
-    ###
-    plt.savefig(filename,facecolor='lightgrey',bbox_inches='tight')    
-    if(show):
-        plt.show()
-
-
-def plot_img_imgmsk_predicts_save(img, imgmsk, predict,  predict_no_padding, filename, show = False):   
-    fig, ax = plt.subplots(1, 4,facecolor = "lightgrey", dpi = 600)
-    [ax_i.set_axis_off() for ax_i in ax.ravel()]   
-    plt.style.use('grayscale')
-    ### 
-    ax[0].set_title('Input image')
-    ax[0].imshow(img,vmin=0, vmax=255)
-    #
-    ax[1].set_title('Image+Predict')
-    ax[1].imshow(imgmsk,vmin=0, vmax=255)
-    ###
-    ax[2].set_title('Predict')
-    ax[2].imshow(predict, vmin=0, vmax=1)
-    ###s
-    ax[3].set_title('No Padding')
-    ax[3].imshow(predict_no_padding, vmin=0, vmax=1)
-    ###
-    plt.savefig(filename,facecolor='lightgrey',bbox_inches='tight')    
-    if(show):
-        plt.show()
-
-
-def plot_reflected_save(input_img,img, img_refl, refl_padd,  predict_padd, filename, show = False):   
-    fig, ax = plt.subplots(1, 5,facecolor = "lightgrey", dpi = 600)
-    [ax_i.set_axis_off() for ax_i in ax.ravel()]   
-    plt.style.use('grayscale')
-    #
-    ax[0].set_title('Input')
-    ax[0].imshow(input_img)
-    ### 
-    ax[1].set_title('Crop')
-    ax[1].imshow(img)
-    #
-    ax[2].set_title('Reflected')
-    ax[2].imshow(img_refl)
-    ###
-    ax[3].set_title('Padding')
-    ax[3].imshow(refl_padd)
-    ###s
-    ax[4].set_title('Predict')
-    ax[4].imshow(predict_padd)
-    ###
-    plt.savefig(filename,facecolor='lightgrey',bbox_inches='tight')    
-    if(show):
-        plt.show()
 
 
 # Crop image with padding 
@@ -357,7 +262,7 @@ def pil_images_combine(img_list:np.ndarray, img_width,img_height, h:int , v:int 
     """
     new_width = h*img_width + (h+1)*space
     new_height= v*img_height + (v+1)*space
-    new_image = Image.new(mode="L",size=(new_width,new_height), color=bachground )
+    new_image = Image.new(mode="RGB",size=(new_width,new_height), color=bachground )
     for i in range (0,v):   
         for j in range (0,h):
             y_pos = space + j*img_height + j*space
@@ -365,3 +270,173 @@ def pil_images_combine(img_list:np.ndarray, img_width,img_height, h:int , v:int 
             img = Image.fromarray(img_list[h*i+j])
             new_image.paste(img,(y_pos,x_pos))
     return new_image
+
+
+def plot_img_and_mask(img, mask):
+    fig, ax = plt.subplots(1, 2 ,facecolor = "lightgrey")
+    [ax_i.set_axis_off() for ax_i in ax.ravel()]
+    plt.style.use('grayscale')        
+    ax[0].set_title('Input image')
+    ax[0].imshow(img)
+    ax[1].set_title('Mask') 
+    ax[1].imshow(mask,vmin=0, vmax=1)
+    plt.show()
+
+#def  plot_images(index_Input_Image:int,input_image, image_roi,image_reflected,croped_images_padding,predicted_masks, predicted_mask, result_mask, img_roi_mask, img_roi_mask_edge,mask_edges, predicted_mask_no_padding ):
+
+
+def plot_images(
+    index_Input_Image: int,
+    input_image:np.ndarray,
+    image_roi:np.ndarray,
+    image_reflected:np.ndarray,    
+    croped_images_padding:np.ndarray,
+    predicted_masks:np.ndarray,
+    predicted_mask:np.ndarray,
+    result_mask:Image,
+    img_roi_mask:Image,
+    img_roi_mask_edge:Image,
+    mask_edges:np.ndarray,
+    predicted_mask_no_padding:np.ndarray,
+    h:int,
+    v:int,
+    backcolor:str,
+    padding_color:str,
+    TILE_WIDTH_color:str,
+    titelcolor:str,
+    titelfontsize:int,
+    titelfontname:str,
+    bounding_box_color:str,
+    show = True,
+    save = True,
+):
+        # backcolor = "cyan"
+        # padding_color = "yellow"
+        # TILE_WIDTH_color = "blue"
+        # titelcolor = "red"
+        # titelfontsize = 7
+        # titelfontname = "cursive"
+        # bounding_box_color = "blue"
+        fig, ax = plt.subplots(2, 6,figsize = (8,4), facecolor = backcolor, dpi = 600)
+        #[ax_i.set_axis_off() for ax_i in ax.ravel()]     
+        [ax_i.set_xticks([])  for ax_i in ax.ravel()]  
+        [ax_i.set_yticks([])  for ax_i in ax.ravel()]  
+        #[ax_i.spines["left"].set_visible(True)  for ax_i in ax.ravel()]  
+        [ax_i.spines["left"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+        [ax_i.spines["top"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+        [ax_i.spines["right"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+        [ax_i.spines["bottom"].set_color(bounding_box_color) for ax_i in ax.ravel()]  
+
+        ### 1
+        ax[0][0].set_title('Image',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[0][0].imshow(Image.fromarray(image_roi).convert("RGB"))
+        ###
+        ax[0][1].set_title('Reflect', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)    
+        line_width = 0.3       
+        x = [50,50,(50+image_roi.shape[1]),(50+image_roi.shape[1]),50]
+        y = [50,(50+image_roi.shape[0]),(50+image_roi.shape[0]),50,50]
+        ax[0][1].plot(x,y, color= "red",linestyle = "solid", linewidth = line_width)
+        ax[0][1].imshow(Image.fromarray(image_reflected).convert("RGB"))      
+
+        ax[0][2].set_title('1. Reflect+Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)  
+        ax[0][3].set_title('2. Reflect+Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)               
+        # Draw/Plot Padding Rectagles on Reflected Image.
+        for k in range (0,3):   
+            for i in range (0,v):   
+                for j in range (0,h):
+                    # Crop image
+                    line_width = 5                            
+                    space_x = line_width
+                    space_y = line_width
+                    if (i==0):
+                        space_x = line_width if(j==0) else 0
+                    if (j== (h-1)):
+                        space_x = -line_width
+                    if (i== (v-1)):
+                        space_y= -line_width                   
+                    
+                    
+                    if k==0:    
+                        # Rectangle 200x200
+                        x1 = 50+j*TILE_WIDTH
+                        y1 = 50+i*TILE_WIDTH                         
+                        width = TILE_WIDTH
+                        x = [x1,x1,x1+width,x1+width,x1]
+                        y = [y1,y1+width,y1+width,y1,y1]
+                        # 1. Reflect+Padding
+                        ax[0][2].plot(x, y, color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.5)
+                        # 2. Reflect+Padding
+                        ax[0][3].plot(x, y, color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.5)
+                        # Predicted Mask + Padding
+                        ax[1][0].plot(list(np.asarray(x) -50), list(np.asarray(y) -50), color= TILE_WIDTH_color,linestyle = "solid", linewidth = 0.3)
+                    else:  
+                        # Rectangle 300x300                              
+                        x1 = j*TILE_WIDTH + space_x
+                        y1 = i*TILE_WIDTH  + space_y                       
+
+                        width = TILE_WIDTH+2*TILE_PADDING
+                        x = [x1,x1,x1+width,x1+width,x1]
+                        y = [y1,y1+width,y1+width,y1,y1]
+
+                    if k==1:                                
+                        if ((j+1)%2==0) and ((i+1)%2==0):
+                            ax[0][2].plot(x, y, color= "red",linestyle = "dashed", linewidth = 0.5)
+                        if ((j+1)%2==1) and ((i+1)%2==0):
+                            ax[0][3].plot(x, y, color= "red",linestyle = "dashed", linewidth = 0.5)    
+                    elif k==2:
+                        if ((j+1)%2==1) and ((i+1)%2==1):
+                            ax[0][2].plot(x, y, color= padding_color ,linestyle = "solid", linewidth = 1)
+                        if ((j+1)%2==0) and ((i+1)%2==1):
+                            ax[0][3].plot(x, y, color= padding_color ,linestyle = "solid", linewidth = 1)
+
+        ax[0][2].imshow(Image.fromarray(image_reflected).convert("RGB"))
+        ax[0][3].imshow(Image.fromarray(image_reflected).convert("RGB"))
+        # ###
+        ax[0][4].set_title('Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        croped_imgs_combined = pil_images_combine(croped_images_padding ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 20, bachground = padding_color )
+        ax[0][4].imshow(croped_imgs_combined.convert("RGB"))
+        ###
+        ax[0][5].set_title('Predict with padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)                
+        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 20 , bachground = padding_color )        
+        ax[0][5].imshow(predicted_masks_combined.convert("RGB"))
+        ### 2
+        ax[1][0].set_title('Predicted Mask',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][0].imshow(Image.fromarray(predicted_mask).convert("RGB"))
+        ###
+        ax[1][1].set_title('Mask', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][1].imshow(result_mask.convert("RGB"))
+        ###
+        ax[1][2].set_title('ROI + Mask',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][2].imshow(img_roi_mask.convert("RGB"))
+        ###
+        ax[1][3].set_title('ROI + Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][3].imshow(Image.fromarray(img_roi_mask_edge).convert("RGB"))
+        ###
+        ax[1][4].set_title('Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][4].imshow(mask_edges.convert("RGB"))
+        ###
+        ax[1][5].set_title('NoPadding',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        ax[1][5].imshow(Image.fromarray(predicted_mask_no_padding).convert("RGB"))
+        ###
+        if(save):
+            plt.savefig(SAVE_PLOTS_FILES_PATH[index_Input_Image],facecolor=backcolor,bbox_inches='tight')  
+            plt.close()
+        if(show):  
+            if(save):
+                saved_plot_image = Image.open(SAVE_PLOTS_FILES_PATH[index_Input_Image]).convert("RGB")  
+                saved_plot_image.show()  
+            else:
+                img_buf = io.BytesIO() 
+                plt.savefig(img_buf, format='png',facecolor=backcolor,bbox_inches='tight')                  
+                pil_image_from_buffer = Image.open(img_buf).convert("RGB")
+                pil_image_from_buffer.show()
+                pil_image_from_buffer.save(SAVE_PLOTS_FILES_PATH[k])
+                img_buf.close()
+                     
+
+        
+        # plt.close()
+        # saved_plot_image = Image.open(SAVE_PLOTS_FILES_PATH[index_Input_Image]).convert("RGB")               
+        # saved_plot_image.show()
+
+          

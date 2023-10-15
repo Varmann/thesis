@@ -1,12 +1,13 @@
 from pathlib import Path
 import io
+import os
 
 # Default Values of train model arguments
-EPOCHS = 50
-BATCH_SIZE = 20
+EPOCHS = 100
+BATCH_SIZE = 50
 LEARNING_RATE = 1e-5
 # Percent of the data that is used as validation (0-100)
-VAL_PERCENT = 20.0
+VAL_PERCENT = 10.0
 # Default classes number
 N_CLASSES = 2
 # Image Scaling dont change for the given Konfiguration
@@ -30,19 +31,19 @@ CROP_SIZE = TILE_WIDTH + 2 * TILE_PADDING
 # Input Image and Input Mask Region of Interest 
 # Region of the air bubbles.
 # Row
-# ROW_MIN = 50
-# HEIGHT = 1250+150
-# #Column
-# COL_MIN = 60
-# WIDTH = 620
+ROW_MIN = 50
+HEIGHT = 1250+150
+#Column
+COL_MIN = 60
+WIDTH = 620
 
 
 #### Entire Image 
-ROW_MIN = 0
-HEIGHT = 1500
-#Column
-COL_MIN = 0
-WIDTH = 750
+# ROW_MIN = 0
+# HEIGHT = 1500
+# #Column
+# COL_MIN = 0
+# WIDTH = 750
 
 
 
@@ -52,6 +53,8 @@ WIDTH = 750
 # COL_MIN = 230
 # WIDTH = 600
 
+
+SAVE_IMAGES_MASKS = True
 
 # Files Paths
 DIR_CHECKPOINTS = Path(__file__).parent.resolve() / "checkpoints"

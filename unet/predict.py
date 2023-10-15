@@ -158,24 +158,22 @@ if __name__ == "__main__":
         input_image = np.array(Image.open(filename_Input_Image).convert("L"))
 
         #####################################################################################
-        logging.info("Croping with padding")
+        logging.info("Predicting with padding")
         # crop image
         image_roi = input_image[ROW_MIN : ROW_MIN + HEIGHT, COL_MIN : COL_MIN + WIDTH]
         #plt.imshow(image)
         # Reflect / Crop
-        image_reflected, croped_images, number_crops = crop_with_padding(image_roi, TILE_WIDTH, TILE_PADDING)
+        image_reflected, croped_images_padding, number_crops = crop_with_padding(image_roi, TILE_WIDTH, TILE_PADDING)
         predicted_masks = {}
         h = number_crops[0]  # horizontal
         v = number_crops[1]  # vertical
 
-        croped_imgs_combined = pil_images_combine(croped_images ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 10, bachground = "white" )
-        #imgs_combined.show()
         # Predict every part      
         for i in range(0, v):
             for j in range(0, h):
                 mask1 = predict_img(
                     net=net,
-                    full_img=Image.fromarray(croped_images[h * i + j]),
+                    full_img=Image.fromarray(croped_images_padding[h * i + j]),
                     scale_factor=args.scale,
                     out_threshold=args.mask_threshold,
                     device=device,
@@ -183,10 +181,6 @@ if __name__ == "__main__":
                 temp_mask1 = mask_to_image(mask1, mask_values)
                 predicted_masks[h * i + j] = np.array(temp_mask1)
         
-        
-        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h, v , space = 10 , bachground = "lightgray" )
-        #masks_combined.show()
-
         # Add together
         mask_add_h = []
         mask_add_v = []
@@ -227,16 +221,30 @@ if __name__ == "__main__":
             if i==1:
                 val = 0
             #val = 255 if i == 0 else 0
-            output_rgb_1[..., i] = np.where(mask_array > 0, val, 0)
+            output_rgb_1[..., i] = np.where(mask_array > 0, val, 200)
         
+        # for i in range(3):
+        #     #Red
+        #     if i==0:
+        #         val = 0
+        #     #Green
+        #     if i==1:
+        #         val = 255
+        #     #Blue
+        #     if i==1:
+        #         val = 255
+        #     #val = 255 if i == 0 else 0
+        #     output_rgb_1[..., i] = np.where(mask_array == 0, val, output_rgb_1[..., i])
         
         background = Image.fromarray(image_roi)
         foreground = Image.fromarray(output_rgb_1)
         foreground.paste(background, (0, 0), background)      
 
         img_roi_mask = foreground.copy()
-        img_roi_mask.convert("RGB").save(SAVE_ROI_MASK_FILES_PATH[index_Input_Image])
-        logging.info(f"{Path(SAVE_ROI_MASK_FILES_PATH[index_Input_Image]).name}  Image and Predicted Mask saved to -> {Path(SAVE_ROI_MASK_FILES_PATH[index_Input_Image])}  ")
+        
+        if(SAVE_IMAGES_MASKS):
+            img_roi_mask.convert("RGB").save(SAVE_ROI_MASK_FILES_PATH[index_Input_Image])
+        logging.info(f"{Path(SAVE_ROI_MASK_FILES_PATH[index_Input_Image]).name} Image and Predicted Mask saved to -> {Path(SAVE_ROI_MASK_FILES_PATH[index_Input_Image])}  ")
 
        
         img_roi_mask_edge = image_roi[..., None].repeat(3, axis=-1)
@@ -248,14 +256,15 @@ if __name__ == "__main__":
             val = 255 if i == 0 else 0
             img_roi_mask_edge[..., i] = np.where(mask_array > 0, val, img_roi_mask_edge[..., i])
         
-
-        Image.fromarray(img_roi_mask_edge).convert("RGB").save(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image])
-        logging.info(f"{Path(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image]).name}  Image and Predicted Mask Edge saved to -> {Path(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image])}  ")
+        if(SAVE_IMAGES_MASKS):
+            Image.fromarray(img_roi_mask_edge).convert("RGB").save(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image])
+            logging.info(f"{Path(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image]).name} Image and Predicted Mask Edge saved to -> {Path(SAVE_ROI_MASK_EDGE_FILES_PATH[index_Input_Image])}  ")
 
         if not args.no_save:
-            out_filename = out_files[index_Input_Image]
-            result_mask.save(out_filename)
-            logging.info(f" {Path(out_filename).name}  Mask saved to -> {Path(out_filename)}  ")
+            out_filename = out_files[index_Input_Image] 
+            if(SAVE_IMAGES_MASKS):           
+                result_mask.save(out_filename)
+                logging.info(f"{Path(out_filename).name}  Mask saved to -> {Path(out_filename)}  ")
 
         if args.viz:
             logging.info(
@@ -264,7 +273,7 @@ if __name__ == "__main__":
             plot_img_and_mask(image_roi, predicted_mask)
 
         #####################################################################################
-        logging.info("Croping without padding")
+        logging.info("Predicting without padding")
         # Reflect / Crop  without padding
         croped_images2, number_crops2 = crop_without_padding(image_roi, (TILE_WIDTH + 2 * TILE_PADDING))
         pred_masks_2 = {}
@@ -308,115 +317,29 @@ if __name__ == "__main__":
             )
             logging.info(f'Visualizing Masks for image -> {Path(filename_Input_Image).name}')
             
-            
-            if  (True):            
-   
-                backcolor = "blue"
-                titelfontsize = 6
-                titelfontname = 'Arial'
-                fig, ax = plt.subplots(2, 6,figsize = (8,4), facecolor = backcolor, dpi = 600)
-                [ax_i.set_axis_off() for ax_i in ax.ravel()]                   
-                #fig.tight_layout()                
-                #plt.style.use('grayscale')
-                ### 1
-                ax[0][0].set_title('Input',fontsize=titelfontsize, fontname = titelfontname)
-                ax[0][0].imshow(Image.fromarray(input_image).convert("RGB"))
-                ###
-                ax[0][1].set_title('ROI', fontsize=titelfontsize, fontname = titelfontname)
-                ax[0][1].imshow(Image.fromarray(image_roi).convert("RGB")) 
-                ##
-                ax[0][2].set_title('Reflect', fontsize=titelfontsize, fontname = titelfontname)    
-                line_width = 0.3
-                # ax[0][2].plot([50,50],[0,image_reflected.shape[0]], color= "red",linestyle = "solid", linewidth = line_width)
-                # ax[0][2].plot([0,image_reflected.shape[1]],[50,50], color= "red",linestyle = "solid", linewidth = line_width)
-                # ax[0][2].plot([50+image_roi.shape[1],50+image_roi.shape[1]],[0,image_reflected.shape[0]], color= "red",linestyle = "solid", linewidth = line_width)
-                # ax[0][2].plot([0,image_reflected.shape[1]],[50+image_roi.shape[0],50+image_roi.shape[0]], color= "red",linestyle = "solid", linewidth = line_width)
-
-                x = [50,50,(50+image_roi.shape[1]),(50+image_roi.shape[1]),50]
-                y = [50,(50+image_roi.shape[0]),(50+image_roi.shape[0]),50,50]
-                ax[0][2].plot(x,y, color= "red",linestyle = "solid", linewidth = line_width)
-                ax[0][2].imshow(Image.fromarray(image_reflected).convert("RGB"))             
-                ##
-                ax[0][3].set_title('Reflect+Padding', fontsize=titelfontsize, fontname = titelfontname)               
-
-                for k in range (0,3):   
-                    for i in range (0,v):   
-                        for j in range (0,h):
-                            # Crop image
-                            line_width = 2                            
-                            space_x = line_width
-                            space_y = line_width
-                            if (i==0):
-                                space_x = line_width if(j==0) else 0
-                            if (j== (h-1)):
-                                space_x = -line_width
-                            if (i== (v-1)):
-                                space_y= -line_width
-                            
-
-                            if k==0:    
-                                x1 = 50+j*TILE_WIDTH
-                                y1 = 50+i*TILE_WIDTH                         
-                                width = TILE_WIDTH
-                                x = [x1,x1,x1+width,x1+width,x1]
-                                y = [y1,y1+width,y1+width,y1,y1]
-                                ax[0][3].plot(x, y, color= "blue",linestyle = "solid", linewidth = 1)
-                            else:                                
-                                x1 = j*TILE_WIDTH + space_x
-                                y1 = i*TILE_WIDTH  + space_y                       
-
-                                width = TILE_WIDTH+2*TILE_PADDING
-                                x = [x1,x1,x1+width,x1+width,x1]
-                                y = [y1,y1+width,y1+width,y1,y1]
-
-                            if k==1:                                
-                                if ((j+1)%2==0) and ((i+1)%2==0):
-                                    ax[0][3].plot(x, y, color= "red",linestyle = "solid", linewidth = 1)
-                            elif k==2:
-                                if ((j+1)%2==1) and ((i+1)%2==1):
-                                    ax[0][3].plot(x, y, color= "yellow" ,linestyle = "solid", linewidth = 1)
-
-                ax[0][3].imshow(Image.fromarray(image_reflected).convert("RGB"))
-                # ###
-                ax[0][4].set_title('Padding', fontsize=titelfontsize, fontname = titelfontname)
-                ax[0][4].imshow(croped_imgs_combined.convert("RGB"))
-                ###
-                ax[0][5].set_title('Predict', fontsize=titelfontsize, fontname = titelfontname)
-                ax[0][5].imshow(predicted_masks_combined.convert("RGB"))
-                ### 2
-                ax[1][0].set_title('Predicted Mask', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][0].imshow(Image.fromarray(predicted_mask).convert("RGB"))
-                ###
-                ax[1][1].set_title('Mask', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][1].imshow(result_mask.convert("RGB"))
-                ###
-                ax[1][2].set_title('ROI + Mask', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][2].imshow(img_roi_mask.convert("RGB"))
-                ###
-                ax[1][3].set_title('ROI + Mask Edges', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][3].imshow(Image.fromarray(img_roi_mask_edge).convert("RGB"))
-                ###
-                ax[1][4].set_title('Mask Edges', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][4].imshow(mask_edges.convert("RGB"))
-                ###
-                ax[1][5].set_title('NoPadding', fontsize=titelfontsize, fontname = titelfontname)
-                ax[1][5].imshow(Image.fromarray(predicted_mask_no_padding).convert("RGB"))
-                ###
-                plt.savefig(SAVE_PLOTS_FILES_PATH[index_Input_Image],facecolor=backcolor,bbox_inches='tight')  
-                plt.show()
-                
-                # img_buf = io.BytesIO()
-                # plt.savefig(img_buf, format='png',facecolor=backcolor,bbox_inches='tight')
-                # im = Image.open(img_buf).convert("RGB")
-                # #im.show()
-                # im.save(SAVE_PLOTS_FILES_PATH[k])
-                # img_buf.close()
-
-                # plt.show()
-                # #plt.pause(5)
-                # plt.close()
-          
-
+            if(True):
+                plot_images(
+                    index_Input_Image,
+                    input_image,
+                    image_roi,image_reflected,                
+                    croped_images_padding,
+                    predicted_masks, 
+                    predicted_mask, 
+                    result_mask, 
+                    img_roi_mask, 
+                    img_roi_mask_edge,mask_edges, 
+                    predicted_mask_no_padding, 
+                    h = number_crops[0],
+                    v = number_crops[1],
+                    backcolor = "blue",
+                    padding_color = "yellow",
+                    TILE_WIDTH_color = "blue",
+                    titelcolor = "red",
+                    titelfontsize = 7,
+                    titelfontname = "cursive",
+                    bounding_box_color = "blue",
+                    save = SAVE_IMAGES_MASKS,
+                    show = True)
             else:
                 mask_img = crop(np.array(Image.open(IMGS_MASK_FILES_PATH[k])),ROW_MIN,HEIGHT,COL_MIN,WIDTH)
 
