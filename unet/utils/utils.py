@@ -415,7 +415,8 @@ def plot_images(
                         y1 = i*TILE_WIDTH  + space_y  
                         x = [x1,x1,x1+CROP_SIZE,x1+CROP_SIZE,x1]
                         y = [y1,y1+CROP_SIZE,y1+CROP_SIZE,y1,y1]
-
+                        
+                    ##################################################################################################### 40_1
                     if k==1:                                
                         if ((j+1)%2==0) and ((i+1)%2==0):
                             ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
@@ -426,6 +427,51 @@ def plot_images(
                             ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
                         if ((j+1)%2==0) and ((i+1)%2==1):
                             ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    ##################################################################################################### 40_1
+
+                    ##################################################################################################### 40_2
+                    # if k==1:                                
+                    #     if ((j+1)%2==1) and ((i+1)%2==1):
+                    #         ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
+                    #     if ((j+1)%2==1) and ((i+1)%2==0):
+                    #         ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)    
+                    # elif k==2:
+                    #     if ((j+1)%2==0) and ((i+1)%2==1):
+                    #         ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    #     if ((j+1)%2==0) and ((i+1)%2==0):
+                    #         ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    ##################################################################################################### 40_2
+
+
+                    ##################################################################################################### 40_3
+                    # if k==1: 
+                    #     if ((j+1)%2==0) and ((i+1)%2==1):
+                    #         ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_2, linewidth = 0.5)
+                    #     if ((j+1)%2==0) and ((i+1)%2==0):
+                    #         ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_2, linewidth = 0.5)                               
+                       
+                    # elif k==2:
+                    #     if ((j+1)%2==1) and ((i+1)%2==1):
+                    #         ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    #     if ((j+1)%2==1) and ((i+1)%2==0):
+                    #         ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)    
+                     
+                    ##################################################################################################### 40_3
+
+                    ##################################################################################################### 50
+                    # if k==1:                           
+                    #     if ((j==0) and ((i+1)%2==1)) or ((j==2) and ((i+1)%2==0)):
+                    #         ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
+                    #     if ((j==2) and ((i+1)%2==1)) or ((j==0) and ((i+1)%2==0)):
+                    #         ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
+
+                    # if k==2:                           
+                    #     if ((j==1) and ((i+1)%2==1)) or ((j==3) and ((i+1)%2==0)):
+                    #         ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    #     if ((j==3) and ((i+1)%2==1)) or ((j==1) and ((i+1)%2==0)):
+                    #         ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    ##################################################################################################### 50
+
 
         ax[0][2].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))
         ax[0][3].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))
