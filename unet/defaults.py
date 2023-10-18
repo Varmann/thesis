@@ -1,13 +1,14 @@
+
 from pathlib import Path
 import io
 import os
 
 # Default Values of train model arguments
-EPOCHS = 100
-BATCH_SIZE = 50
+EPOCHS = 10
+BATCH_SIZE = 36
 LEARNING_RATE = 1e-5
 # Percent of the data that is used as validation (0-100)
-VAL_PERCENT = 10.0
+VAL_PERCENT = 10
 # Default classes number
 N_CLASSES = 2
 # Image Scaling dont change for the given Konfiguration
@@ -22,10 +23,11 @@ MODEL_CHECKPOINT = Path(__file__).parent.resolve() / "checkpoints" / "checkpoint
 TRAIN_LOAD_LAST_MODEL = False
 
 ### Padding and Crop Parameter
+## CNN Input Image size 300X300
 ## CROP_SIZE corresponds to CNN input layer Parameter . Don't change this parameter.
 CROP_SIZE = 300
 # TILE_PADDING can be changed. Default is 50.
-TILE_PADDING = 30
+TILE_PADDING = 40
 TILE_WIDTH = CROP_SIZE - 2*TILE_PADDING
 
 # Input Image: Height = 1500, Widht = 750
@@ -34,6 +36,7 @@ TILE_WIDTH = CROP_SIZE - 2*TILE_PADDING
 # Region of the air bubbles.
 # Row
 ROW_MIN = 50
+ROW_SAND_BORDER = 700
 HEIGHT = 1250+150
 #Column
 COL_MIN = 60
@@ -62,7 +65,7 @@ SAVE_IMAGES_MASKS = True
 DIR_CHECKPOINTS = Path(__file__).parent.resolve() / "checkpoints"
 #DIR_CHECKPOINTS.mkdir(exist_ok=True)
 
-images_not_trained = True
+images_not_trained = False
 
 DIR_IMG = Path(__file__).parent.resolve() / "data" / "imgs"
 DIR_MASKS = Path(__file__).parent.resolve() / "data" / "masks"
@@ -80,12 +83,7 @@ if(images_not_trained) :
     SAVE_ROI_MASK_EDGE_PATH = Path(__file__).parent.resolve() / "data" /"imgs_not_seen" /"roi_mask_edge_predicted"
 
 
-#DIR_PREDICTED.mkdir(exist_ok=True)
-
-IMAGE_FILES_PATH = [str(p) for p in DIR_IMG.iterdir() if p.is_file()]
-
-
-n = len(IMAGE_FILES_PATH)
+## Get Files from first to last
 IMAGE_FILES_PATH = []
 IMGS_MASK_FILES_PATH = []
 PREDICTED_IMAGES_FILES_PATH = []
@@ -93,13 +91,53 @@ SAVE_PLOTS_FILES_PATH = []
 SAVE_ROI_MASK_FILES_PATH = []
 SAVE_ROI_MASK_EDGE_FILES_PATH = []
 
-for i in range(0,n):
-   IMAGE_FILES_PATH.append( str(DIR_IMG) + "\\image_" + str(i+1) + ".png")
-   IMGS_MASK_FILES_PATH.append( str(DIR_MASKS) + "\\image_" + str(i+1) + "_mask.png")
-   PREDICTED_IMAGES_FILES_PATH.append( str(DIR_PREDICTED) + "\\image_" + str(i+1) + "_OUT.png")
-   SAVE_PLOTS_FILES_PATH.append( str(SAVE_PLOTS_PATH) + "\\plot_" + str(i+1) + "_OUT.png")
-   SAVE_ROI_MASK_FILES_PATH.append( str(SAVE_ROI_MASK_PATH) + "\\ROI_MASK_" + str(i+1) + "_Predicted.png")
-   SAVE_ROI_MASK_EDGE_FILES_PATH.append( str(SAVE_ROI_MASK_EDGE_PATH) + "\\ROI_MASK_EDGE" + str(i+1) + "_Predicted.png")
+for i, filename in enumerate(os.listdir(DIR_IMG)):
+    IMAGE_FILES_PATH.append( os.path.join(DIR_IMG ,( filename)))
+    IMGS_MASK_FILES_PATH.append(os.path.join(DIR_MASKS ,(filename[:-4] + "_mask.png")))
+    PREDICTED_IMAGES_FILES_PATH.append(os.path.join(DIR_PREDICTED ,(filename[:-4] + "_OUT.png")))
+    SAVE_PLOTS_FILES_PATH.append(os.path.join(SAVE_PLOTS_PATH ,(filename[:-4] + "_PLOT_OUT.png")))
+    SAVE_ROI_MASK_FILES_PATH.append(os.path.join(SAVE_ROI_MASK_PATH ,(filename[:-4] + "_ROI_MASK_OUT.png")))
+    SAVE_ROI_MASK_EDGE_FILES_PATH.append(os.path.join(SAVE_ROI_MASK_EDGE_PATH ,(filename[:-4] + "_ROI_MASK_EDGE_OUT.png")))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#DIR_PREDICTED.mkdir(exist_ok=True)
+
+# IMAGE_FILES_PATH = [str(p) for p in DIR_IMG.iterdir() if p.is_file()]
+# num_IMAGE_FILES= len(IMAGE_FILES_PATH)
+
+# ## Get Files from first to last
+# IMAGE_FILES_PATH = []
+# IMGS_MASK_FILES_PATH = []
+# PREDICTED_IMAGES_FILES_PATH = []
+# SAVE_PLOTS_FILES_PATH = []
+# SAVE_ROI_MASK_FILES_PATH = []
+# SAVE_ROI_MASK_EDGE_FILES_PATH = []
+
+
+# for i in range(0,num_IMAGE_FILES):
+#    IMAGE_FILES_PATH.append( str(DIR_IMG) + "\\image_" + str(i+1) + ".png")
+#    IMGS_MASK_FILES_PATH.append( str(DIR_MASKS) + "\\image_" + str(i+1) + "_mask.png")
+#    PREDICTED_IMAGES_FILES_PATH.append( str(DIR_PREDICTED) + "\\image_" + str(i+1) + "_OUT.png")
+#    SAVE_PLOTS_FILES_PATH.append( str(SAVE_PLOTS_PATH) + "\\plot_" + str(i+1) + "_OUT.png")
+#    SAVE_ROI_MASK_FILES_PATH.append( str(SAVE_ROI_MASK_PATH) + "\\ROI_MASK_" + str(i+1) + "_Predicted.png")
+#    SAVE_ROI_MASK_EDGE_FILES_PATH.append( str(SAVE_ROI_MASK_EDGE_PATH) + "\\ROI_MASK_EDGE" + str(i+1) + "_Predicted.png")
 
 
 # SAVE_PLOTS_FILES_PATH = [
@@ -107,3 +145,5 @@ for i in range(0,n):
 #     for p in DIR_IMG.iterdir()
 #     if p.is_file()
 # ]
+
+# %%

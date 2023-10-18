@@ -72,7 +72,7 @@ class BasicDataset(Dataset):
         w, h = pil_img.size
         newW, newH = int(scale * w), int(scale * h)
         assert newW > 0 and newH > 0, 'Scale is too small, resized images would have no pixel'
-        # TODO bei resize Performance untersuchen
+        #
         pil_img = pil_img.resize((newW, newH), resample=Image.NEAREST if is_mask else Image.BICUBIC)
         img = np.asarray(pil_img)
 
@@ -111,7 +111,7 @@ class BasicDataset(Dataset):
             f'Image and mask {name} should be the same size, but are {image.size} and {mask.size}'
         
 
-         # TODO Random Crop 300x300 oder andere Augmentation(Spiegeln, 90Grad drehen).
+        # Random Crop 300x300 oder andere Augmentation(Spiegeln, 90Grad drehen).
         # Jedes Bild nur einmal, stattdessen sehr viele epochs.       
         # Row max for Random Row         
         Row_max  = ROW_MIN + HEIGHT - CROP_SIZE

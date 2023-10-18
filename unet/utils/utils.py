@@ -186,60 +186,73 @@ def pil_imgs_random_crop_rotate90_flip(pil_image: Image, pil_mask: Image,crop_si
      2. Random Rotate of multiple of 90 Degree.
      3. Random Flip vertical or horizontal.
     """
-    # image size 1920x1080         
+    # Random Row and Random Colomn       
     Row_random = random.randint(Row_min , Row_max)   
     Column_random = random.randint(Column_min , Column_max)
     #print("Random Column ,Row")
     #print(Row_random,Column_random)
-
-    #im.crop((left, top, right, bottom))
     left    =  Column_random
     top     =  Row_random
     right   =  Column_random + crop_size
     bottom  =  Row_random + crop_size
     croped_image  = pil_image.crop((left, top, right, bottom))
-    croped_mask   = pil_mask.crop((left, top, right, bottom))
-    
+    croped_mask   = pil_mask.crop((left, top, right, bottom))    
     #plot_img_and_mask(croped_image, croped_mask)
-
-    # Random Rotate at 90 degree
-    k_Random = random.randint(0 , 3)        
-    angle  = k_Random * 90  
-    #print("Random Degree", k_Random * 90)
-
-    img_rotate = croped_image.rotate(angle)
-    msk_rotate = croped_mask.rotate(angle)
     
-    j_Random = random.randint(0 , 2)   
-    if(j_Random == 0):
-        img = img_rotate
-        msk = msk_rotate
-    elif (j_Random == 1):
-        img = img_rotate.transpose(Image.FLIP_LEFT_RIGHT)
-        msk = msk_rotate.transpose(Image.FLIP_LEFT_RIGHT)
-    elif(j_Random == 2):
-        img = img_rotate.transpose(Image.FLIP_TOP_BOTTOM)
-        msk = msk_rotate.transpose(Image.FLIP_TOP_BOTTOM)
-    else :
-        raise TypeError("Random int is not 0,1 or2 !",j_Random)
+    #####################################################################################
+    # Only Rotate if the Sand Region, otherwise in reality there will be no such case of
+    # ratation  or FLIP_TOP_BOTTOM  of the Sand-Air border.
+    img = croped_image.copy()
+    msk = croped_mask.copy()    
+    k_Random = 0
+    j_Random = 0     
+    if(Row_random < ROW_SAND_BORDER):        
+        j_Random = random.randint(0 , 1)   
+        if (j_Random == 1):
+            img= croped_image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            msk = croped_mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    else :             
+        k_Random = random.randint(0 , 3) 
+        angle  = k_Random * 90  
+        #print("Random Degree", k_Random * 90)
+        img = croped_image.rotate(angle)
+        msk = croped_mask.rotate(angle)
+        # 
+        # If not rotated try to Flip.
+        if(k_Random==0):
+            j_Random = random.randint(0 , 2)   
+            if (j_Random == 1):
+                img= croped_image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                msk = croped_mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            elif(j_Random == 2):
+                img= croped_image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+                msk = croped_mask.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+    #####################################################################################
         
-    # fig, ax = plt.subplots(1, 5,facecolor = "lightgrey", dpi = 200)
+    # fig, ax = plt.subplots(1, 6,facecolor = "lightgrey", dpi = 300)
     # [ax_i.set_axis_off() for ax_i in ax.ravel()]   
     # plt.style.use('grayscale')
     # ### 
-    # ax[0].imshow(croped_image)
+    # ax[0].set_title("Image")
+    # ax[0].imshow(pil_image)
+    # ### 
+    # ax[1].set_title("Mask")
+    # ax[1].imshow(pil_mask)
     # ###
-    # ax[1].set_title(str(angle))
-    # ax[1].imshow(img_rotate) 
+    # ax[2].set_title("Croped")
+    # ax[2].imshow(croped_image)
+    # ### 
+    # ax[3].set_title(str(Row_random))
+    # ax[3].imshow(croped_mask)
     # ###
-    # ax[2].imshow(msk_rotate,vmin=0, vmax=1)
+    # ax[4].set_title(str(k_Random*90))
+    # ax[4].imshow(img) 
     # ###
-    # ax[3].set_title(str(j_Random))
-    # ax[3].imshow(img)
-    # ax[4].imshow(msk, vmin=0, vmax=1)
-    # #
+    # flip = "LEFT_RIGHT" if j_Random==1 else "TOP_BOTTOM" if j_Random==1 else "NotFlip"
+    # ax[5].set_title(flip)
+    # ax[5].imshow(msk) 
+    # ###
     # plt.show()
-
 
     if(img.size  != (crop_size,crop_size)):
         raise TypeError("Error : Croped Image Size is not equal to Crop size !" ,croped_image.size )
@@ -304,8 +317,9 @@ def plot_images(
     reflect_color:str,
     reflect_linestyle:str,
     facecolor_plot:str,
-    backcolor:str,
     padding_color:str,
+    backcolor_tiling:str,
+    backcolor_predict_padd:str,   
     padd_linestyle_1:str,
     padd_linestyle_2:str,
     combine_space:int,
@@ -341,10 +355,11 @@ def plot_images(
         ax[0][0].set_title('Image',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[0][0].imshow(Image.fromarray(image_roi).convert("RGB"))
         ###
-        ax[0][1].set_title('Reflect', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)             
+        ax[0][1].set_title('Reflect', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        #Draw Image ROI              
         x = [TILE_PADDING,TILE_PADDING,(TILE_PADDING+image_roi.shape[1]),(TILE_PADDING+image_roi.shape[1]),TILE_PADDING]
         y = [TILE_PADDING,(TILE_PADDING+image_roi.shape[0]),(TILE_PADDING+image_roi.shape[0]),TILE_PADDING,TILE_PADDING]
-        ax[0][1].plot(x,y, color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3)
+        ax[0][1].plot(x,y, color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3)         
         ax[0][1].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))      
 
         ax[0][2].set_title('1. Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)  
@@ -417,29 +432,29 @@ def plot_images(
                         y = [y1,y1+CROP_SIZE,y1+CROP_SIZE,y1,y1]
                         
                     ##################################################################################################### 40_1
-                    if k==1:                                
-                        if ((j+1)%2==0) and ((i+1)%2==0):
-                            ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
-                        if ((j+1)%2==1) and ((i+1)%2==0):
-                            ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)    
-                    elif k==2:
-                        if ((j+1)%2==1) and ((i+1)%2==1):
-                            ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
-                        if ((j+1)%2==0) and ((i+1)%2==1):
-                            ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
-                    ##################################################################################################### 40_1
-
-                    ##################################################################################################### 40_2
                     # if k==1:                                
-                    #     if ((j+1)%2==1) and ((i+1)%2==1):
+                    #     if ((j+1)%2==0) and ((i+1)%2==0):
                     #         ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
                     #     if ((j+1)%2==1) and ((i+1)%2==0):
                     #         ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)    
                     # elif k==2:
-                    #     if ((j+1)%2==0) and ((i+1)%2==1):
+                    #     if ((j+1)%2==1) and ((i+1)%2==1):
                     #         ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
-                    #     if ((j+1)%2==0) and ((i+1)%2==0):
+                    #     if ((j+1)%2==0) and ((i+1)%2==1):
                     #         ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
+                    ##################################################################################################### 40_1
+
+                    ##################################################################################################### 40_2
+                    if k==1:                                
+                        if ((j+1)%2==1) and ((i+1)%2==1):
+                            ax[0][2].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)
+                        if ((j+1)%2==1) and ((i+1)%2==0):
+                            ax[0][3].plot(x, y, color= padding_color,linestyle = padd_linestyle_2, linewidth = 0.5)    
+                    elif k==2:
+                        if ((j+1)%2==0) and ((i+1)%2==1):
+                            ax[0][2].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
+                        if ((j+1)%2==0) and ((i+1)%2==0):
+                            ax[0][3].plot(x, y, color= padding_color ,linestyle = padd_linestyle_1, linewidth = 0.5)
                     ##################################################################################################### 40_2
 
 
@@ -476,15 +491,17 @@ def plot_images(
         ax[0][2].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))
         ax[0][3].imshow(Image.fromarray(image_reflected_padding).convert("RGB"))
         # ###
-        ax[0][4].set_title('Crop with Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
-        croped_images_padding_combined = pil_images_combine(croped_images_padding ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h_padding, v_padding , space = combine_space, bachground = padding_color )
+        ax[0][4].set_title('Tiling with Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        croped_images_padding_combined = pil_images_combine(croped_images_padding ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h_padding, v_padding , space = combine_space, bachground = backcolor_tiling )
         ax[0][4].imshow(croped_images_padding_combined.convert("RGB"))
         ###
         ax[0][5].set_title('Predict with Padding', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)                
-        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h_padding, v_padding , space = combine_space , bachground = backcolor )        
+        predicted_masks_combined = pil_images_combine(predicted_masks ,(TILE_WIDTH + 2*TILE_PADDING),(TILE_WIDTH + 2*TILE_PADDING), h_padding, v_padding , space = combine_space , bachground = backcolor_predict_padd )        
         ax[0][5].imshow(predicted_masks_combined.convert("RGB"))
         ### 2
         ax[1][0].set_title('Predicted Mask',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
+        #Draw Image ROI 
+        ax[1][0].plot(  [0,image_roi.shape[1],image_roi.shape[1]],[image_roi.shape[0],image_roi.shape[0],0]  , color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3) 
         ax[1][0].imshow(Image.fromarray(predicted_mask).convert("RGB"))
         ###
         ax[1][1].set_title('Mask', color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
@@ -496,8 +513,7 @@ def plot_images(
         ax[1][3].set_title('Image + Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)
         ax[1][3].imshow(Image.fromarray(img_roi_mask_edge).convert("RGB"))
         ###
-        ax[1][4].set_title('Crop without Padding',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)     
-        ax[1][4].plot(  [0,image_roi.shape[1],image_roi.shape[1]],[image_roi.shape[0],image_roi.shape[0],0]  , color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3) 
+        ax[1][4].set_title('Tiling without Padding',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)     
         # Draw/Plot Padding Rectagles on Reflected Image.
         h_no_padd = number_crops_no_padd[0]  # horizontal
         v_no_padd  = number_crops_no_padd[1]  # vertical   
@@ -518,7 +534,8 @@ def plot_images(
                     else:
                         ax[1][4].plot([x1,x1+CROP_SIZE],[y1+CROP_SIZE,y1+CROP_SIZE], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)   
                         ax[1][4].plot([x1+CROP_SIZE,x1+CROP_SIZE],[y1+CROP_SIZE,y1], color= TILE_WIDTH_color,linestyle = TILE_WIDTH_linestyle, linewidth = 0.5)
-          
+        #Draw Image ROI                
+        ax[1][4].plot(  [0,image_roi.shape[1],image_roi.shape[1]],[image_roi.shape[0],image_roi.shape[0],0]  , color= reflect_color,linestyle = reflect_linestyle, linewidth = 0.3)          
         ax[1][4].imshow(Image.fromarray(image_reflected_no_padd).convert("RGB"))
         # ax[1][4].set_title('Mask Edges',color = titelcolor, fontsize=titelfontsize, fontname = titelfontname)        
         # ax[1][4].imshow(mask_edges.convert("RGB"))

@@ -85,8 +85,8 @@ def get_args():
         "--scale",
         "-s",
         type=float,
-        default=1.0,
-        choices=[1.0],
+        default=IMAGE_SCALE,
+        choices=[0.5,1.0],
         help="Scale factor for the input images",
     )
     parser.add_argument(
@@ -315,7 +315,7 @@ if __name__ == "__main__":
             if(SAVE_IMAGES_MASKS):
                 logging.info(
                     f"{Path(SAVE_PLOTS_FILES_PATH[index_Input_Image]).name} Image and Masks plots saved to -> {Path(SAVE_PLOTS_FILES_PATH[index_Input_Image])} "
-                )            
+                ) 
             
             if(True):
                 logging.info(f'Visualizing Masks for image -> {Path(filename_Input_Image).name}')
@@ -338,8 +338,9 @@ if __name__ == "__main__":
                     reflect_color = "red",
                     reflect_linestyle = "solid", # solid,dashed,dotted,dashdor, "_",":","–","-.",""
                     facecolor_plot = "deepskyblue",
-                    backcolor = "deepskyblue",
                     padding_color = "yellow",
+                    backcolor_tiling = "yellow",
+                    backcolor_predict_padd= "yellow",                    
                     padd_linestyle_1 = "solid",
                     padd_linestyle_2 = "dashed",
                     combine_space = 20, 
